@@ -13,7 +13,9 @@ any open decision remains in the ticket, it is not done.** Detail as much as pos
 implementation time is pure typing, not thinking.
 
 **The central constraint:** interactive drilling CANNOT happen inside a parallel headless fan-out —
-subagents can't talk to the user. So detailing is **4 stages**, not one pass.
+subagents can't talk to the user. So detailing is **4 stages**, not one pass. Writing a spec is cheap
+markdown, so there is ONE review — after the write — and it judges approach AND completeness (a
+wrong-approach re-write costs only markdown, so a separate pre-write review isn't worth a stage).
 
 Phase 1 of the loop. See [[backlog-drain]] (Phase 2) and [[backlog-verify-loop]] (outer loop).
 
@@ -28,7 +30,9 @@ Phase 1 of the loop. See [[backlog-drain]] (Phase 2) and [[backlog-verify-loop]]
 
 1. **Gather (parallel, sonnet, cheap).** One agent per ticket reads the REAL code (grep/graphify) and
    emits ONLY the list of open decisions — `{decision, why it matters, options, recommended}`. No prose,
-   no writing yet. Docs-read-only, no worktrees.
+   no writing yet. Docs-read-only, no worktrees. Then, in the main thread, **eyeball the consolidated
+   decision list before Drill** — "any decision missed? are these the right questions to ask?" (a
+   1-line sanity check that protects the user's time, not a stage).
 2. **Drill (main thread, interactive mode only).** Consolidate + dedupe every open decision across all
    tickets. Ask the user with **AskUserQuestion**, obeying the Question Rules below. **Ask only where a
    decision genuinely forks the build**; safe-defaultable ones you resolve silently and note. Batch —
@@ -36,12 +40,16 @@ Phase 1 of the loop. See [[backlog-drain]] (Phase 2) and [[backlog-verify-loop]]
 3. **Write (parallel, sonnet; opus if >1 package).** One detailer per ticket writes the exhaustive
    `## Implementation Detail` section (frontmatter + existing body intact), baking in the answers. It
    MUST contain every field in the Rubric — no `TODO`/`TBD`. Touches only its own ticket file.
-4. **Review (parallel, opus).** A detail-reviewer scores each ticket against the Rubric and returns
-   `COMPLETE | NEEDS-DETAIL | SPLIT`. `NEEDS-DETAIL` → back to Write with the gaps named. `SPLIT` →
-   auto-split (below). Only `COMPLETE` tickets pass. This is the "properly reviewed" guarantee.
+4. **Review (parallel, opus).** A detail-reviewer scores each ticket and returns
+   `COMPLETE | NEEDS-DETAIL | SPLIT`. It judges THREE things, not just completeness:
+   - **Approach sound?** — right design, fits the invariants (a plausible-but-wrong spec fails here).
+   - **Decision missed?** — a fork Gather/Drill overlooked and the writer silently guessed.
+   - **Fully specified?** — zero decisions left (the Rubric).
+     `NEEDS-DETAIL` → back to Write with the gaps named (cheap — it's only markdown). `SPLIT` →
+     auto-split (below). Only `COMPLETE` tickets pass. This is the "properly reviewed" guarantee.
 
-Mechanics: Workflow `parallel()` for Gather → main-thread Drill → Workflow `pipeline(write, review)`.
-Autonomous mode collapses to just `pipeline(write, review)`.
+Mechanics: Workflow `parallel()` for Gather → main-thread sanity-check + Drill → Workflow
+`pipeline(write, review)`. Autonomous mode collapses to just `pipeline(write, review)`.
 
 ## The Rubric (writer fills, reviewer enforces — "zero decisions left")
 
