@@ -1,66 +1,45 @@
 ---
 name: backlog-drain
-description: Use when implementing many backlog tickets/features across parallel agents as fast as safely possible - partitioning into conflict-free waves, building + Opus-reviewing each in an isolated worktree, then merging serially and running the full gate. Triggers - "drain the backlog", "build the tickets in parallel", "run the next wave", "implement the backlog", "fan out builders".
+description: "Backlog-to-merged drain loop over parallel builder agents. Use when a detailed ticket backlog must be implemented as fast as safely possible, or when the user says 'drain the backlog', 'build the tickets in parallel', 'run the next wave', 'implement the backlog', 'fan out builders'. Not for an undetailed backlog — run backlog-detail first."
 ---
 
 # backlog-drain
 
 ## Overview
 
-Phase 2 of the detail → drain → verify loop: turn detailed tickets into merged, gate-green code.
-**Core principle: parallel within a wave, serial across the merge.** Builders run concurrently in
-isolated worktrees; **one mind (you) owns the merge** onto the shared branch and runs the real gate.
+Phase 2 of the detail → drain → verify loop: turn detailed tickets into merged, gate-green code in rounds until no buildable ticket remains. **Parallel within a wave, serial across the merge** — builders fan out in isolated worktrees; one mind (you) owns every merge and runs the real gate.
 
-**REQUIRED SUB-SKILL:** this skill is the _driver_; the mechanics (the Workflow `pipeline(build,
-review)` script, builder/reviewer prompt templates, serial-merge + conflict + gate playbook, HEAD-drift
-recovery) live in **orchestrating-parallel-agents** — load it and follow it exactly. This file adds the
-backlog-loop framing on top.
+**REQUIRED SUB-SKILL: orchestrating-parallel-agents** is the engine — round checklist, `pipeline(build, review)` workflow (workflow-pipeline.md), builder/reviewer prompt templates (builder-and-reviewer-prompts.md), serial-merge + conflict + gate playbook with HEAD-drift recovery (merge-gate-and-recovery.md), and the model/effort sizing table. Load it and follow it exactly; this skill adds only the backlog-loop contract.
 
-Runs after [[backlog-detail]] (Phase 1). Wrapped by [[backlog-verify-loop]] (the outer loop).
+Runs after backlog-detail (Phase 1). Wrapped by backlog-verify-loop (the outer loop).
 
 ## When to use
 
-- A set of detailed, independent tickets touching _different_ files, and speed matters.
-- You want the widest safe parallelism, not one linear thread.
+- A set of detailed, independent tickets touching different files, and speed matters — you want the widest safe parallelism.
 
-**Do NOT use** for one tightly-coupled change (single thread), tickets that share the same files
-(serialize them), or an undetailed backlog (run [[backlog-detail]] first).
+**Do NOT use** for one tightly-coupled change (single thread), tickets that share files (serialize those), or an undetailed backlog (backlog-detail first — vague tickets burn builder runs on unmade decisions).
 
-## Procedure (rounds until drained)
+## The drain loop (rounds until drained)
 
-1. **Verify-not-done + partition.** `yarn board:waves` (or hand-partition by disjoint file footprints).
-   **Grep the base to confirm each ticket isn't already shipped** — stale backlogs waste whole agent
-   runs. Width per round = the wave's truly disjoint tickets; **one stream per hot shared area**. A
-   phased chain contributes only its ONE current head this round.
-2. **Run the build+review pipeline** (from orchestrating-parallel-agents): each builder in an
-   `isolation:'worktree'` subagent carrying that skill's builder template (self-verify via the repo's
-   worktree-verify script, commit after every file, touch ONLY in-scope files, obey the repo's
-   CLAUDE.md/AGENTS.md); each reviewer **opus**, structured verdict, fires the instant its build lands.
-   **No merge inside the workflow** — it returns the verified branches.
-3. **Merge serially + gate.** YOU merge each non-`NEEDS-FIX` branch one at a time onto the _current_
-   base tip (re-read it each time); union the append-only-manifest conflict (`--ours` + append the
-   branch's new entry, never `--theirs` whole). After ALL merges this round, run the FULL
-   `build && test && lint` gate — cross-package breaks only surface here. Paste real output; fix forward.
-4. **Bookkeep.** Retire merged tickets with the proving SHA, file follow-ups for any deferred slice
-   (no buried work), refresh the board, prune YOUR worktrees/branches, re-check HEAD/base didn't drift.
-5. **Next round.** Chain heads that just merged are now unblocked. Repeat until no buildable ticket remains.
+Each round executes the engine's round checklist. The drain contract on top:
 
-## Model / effort
+1. **Verify-not-done before any dispatch.** One grep/ls against the base branch per candidate; already shipped → retire with the proving SHA, dispatch nothing. WHY: roughly 1 in 3 backlog items is already shipped — each stale dispatch burns a whole agent run.
+2. **Partition into a conflict-free wave.** If the repo has board tooling, use it (e.g. `yarn board:waves` prints tickets with satisfied dependencies and non-colliding touched paths); otherwise hand-partition by disjoint file footprints. Width = the wave's disjoint count, never the backlog size. A phased chain contributes only its ONE unblocked head this round.
+3. **Build + review through the engine's pipeline.** Nothing merges inside the workflow — it returns verified branches.
+4. **You merge serially, then run the FULL gate** (build + test + lint) once after ALL the round's merges — cross-package breaks only surface on the integrated state. Paste real output; fix forward.
+5. **Bookkeep — the round is not over until:**
+   - every merged ticket is retired with its proving merge SHA (via board tooling if present, e.g. set status then `yarn board:merge <id>`);
+   - every deferred slice has a filed follow-up ticket — no buried work;
+   - YOUR worktrees/branches are pruned, and HEAD/base re-checked for drift.
+6. **Next round.** Just-merged chain heads are now unblocked — recompute the wave. Drained = no buildable ticket remains, not "this round finished".
 
-| Stream                                                   | Model                                         |
-| -------------------------------------------------------- | --------------------------------------------- |
-| Small, one area (config/button/copy)                     | sonnet                                        |
-| Cross-package / heavy investigation / design-critical UI | **opus** (sonnet truncates mid-investigation) |
-| **Every reviewer**                                       | **opus** (mandatory, before every merge)      |
+## Drain-specific mistakes
 
-## Common mistakes
+| Mistake                                      | Reality                                                        |
+| -------------------------------------------- | -------------------------------------------------------------- |
+| "All tickets in parallel"                    | Width = the wave's disjoint count, not the backlog size        |
+| Drain undetailed tickets                     | Builders stall on unmade decisions; run backlog-detail first   |
+| Stop after one round                         | Merges unblock chain heads; drained = no buildable ticket left |
+| Retire without the proving SHA, bury a slice | The board rots stale — the exact drift step 1 exists to catch  |
 
-| Mistake                              | Reality                                                                      |
-| ------------------------------------ | ---------------------------------------------------------------------------- |
-| "All tickets in parallel"            | Only _disjoint_ tickets — width = the wave, not the backlog size             |
-| Dispatch before grepping base        | ~1-in-3 backlog items already shipped; you burn a full run finding out       |
-| Two streams in the same file/package | Merge corruption + lost work; partition by disjoint files                    |
-| `git merge` inside the workflow      | Stages run concurrently → merges race the branch; merge in main thread       |
-| Gate per-branch, skip the full run   | Cross-package breaks hide until the whole graph compiles                     |
-| Merge an unreviewed branch           | The Opus review is the quality bar; trust the review + gate, not the builder |
-| Parallelize phases of one chain      | Phase N+1 needs N merged; one head/round, advance next round                 |
+Build/merge mistakes (stale-base dispatch, same-file streams, in-workflow merges, per-branch gating, unreviewed merges, chained phases) are owned by orchestrating-parallel-agents — read its table too.
