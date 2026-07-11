@@ -91,14 +91,18 @@ contract), breaking sibling fixtures/call-sites that weren't in any branch's dif
 Worktree auto-clean can move the primary HEAD onto an agent branch; a stray reset can move the base
 ref backward and orphan committed work. After every cleanup:
 
+Run the steps **in this exact order** — `git reset --hard` moves whichever branch is currently
+checked out, so resetting before you are back on the base branch rewrites the WRONG ref (e.g. an
+agent branch) and leaves the base still broken:
+
 ```bash
-git rev-parse --abbrev-ref HEAD            # should be your base branch
-git rev-parse <base>                       # should be >= your known-good SHA
-# if HEAD hijacked:
+git rev-parse --abbrev-ref HEAD            # 1. should be your base branch
+git rev-parse <base>                       # 2. should be >= your known-good SHA
+# if HEAD hijacked — fix this FIRST, before any reset:
 git checkout <base>
-# if the base ref moved BACKWARD (lost commits):
+# only now, if the base ref moved BACKWARD (lost commits):
 git reflog <base>                          # find the real tip
-git reset --hard <real-tip-SHA>
+git reset --hard <real-tip-SHA>            # safe: you are ON <base>, so this moves <base>
 ```
 
 Mitigations that prevent the incident: keep worktree-agent count within the disjoint width, harvest
