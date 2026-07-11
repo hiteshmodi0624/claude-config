@@ -15,7 +15,9 @@ DST="$SCRIPT_DIR/payload"
 
 for item in skills hooks agents commands CLAUDE.md WORKFLOW.md RTK.md; do
   if [ -e "$SRC/$item" ]; then
-    rsync -a --delete --exclude='node_modules' "$SRC/$item" "$DST/" \
+    # -L dereferences symlinks (e.g. skills/remotion-best-practices -> ~/.agents),
+    # so payload holds real content, not a link that dangles on other machines.
+    rsync -aL --delete --exclude='node_modules' "$SRC/$item" "$DST/" \
       && echo "synced: $item"
   fi
 done

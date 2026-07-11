@@ -53,6 +53,10 @@ T5="$TMPROOT/repo"; mkdir -p "$T5"
 bash "$INSTALL" --repo "$T5" --copy --lean >/dev/null
 check "repo/.claude/skills exists" "[ -d '$T5/.claude/skills' ]"
 
+echo "TEST: payload integrity (guards sync-from-home symlink/leak regressions)"
+check "no symlinks in payload"     "[ -z \"\$(find '$SCRIPT_DIR/payload' -type l)\" ]"
+check "no laptop path in payload"  "! grep -rIl '/Users/hiteshmodi' '$SCRIPT_DIR/payload'"
+
 echo
 echo "RESULT: $PASS passed, $FAIL failed"
 [ "$FAIL" -eq 0 ]
