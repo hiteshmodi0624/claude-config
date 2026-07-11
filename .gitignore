@@ -3,3 +3,4 @@ payload/settings.json
 **/settings.json.pre-claude-config.bak
 **/node_modules/
 .DS_Store
+.autosync.log
