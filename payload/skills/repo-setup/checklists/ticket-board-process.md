@@ -31,8 +31,16 @@ an existing project's "tracking" has become scattered across chat, memory, and t
 7. **Decide the retirement process** — how something gets marked genuinely finished and moved out
    of the active view, and who or what makes sure the record of what was actually done doesn't get
    lost in the process.
-8. **Step back periodically and look at the whole backlog, not just item by item.** This is the
-   only way to catch the roadmap quietly drifting away from what the product actually needs now.
+8. **Capture what the user actually said, separate from the work it spawns.** A bug report or a
+   feature ask is the user's own words — keep it as its own artifact (an "intake" item) that links
+   to the engineering ticket(s) it produced, rather than collapsing the two. The report survives
+   even after its tickets are retired.
+9. **Close the loop on live confirmation, not on merge.** A reported issue is only truly done when
+   the user (owner) confirms the fix works for them — not the moment the code ships. Make the
+   tracker enforce this: if every ticket linked to a report is finished but the owner hasn't
+   confirmed live, the report stays open and the gate flags it.
+10. **Step back periodically and look at the whole backlog, not just item by item.** This is the
+    only way to catch the roadmap quietly drifting away from what the product actually needs now.
 
 ## Signs You Did This Right
 
@@ -41,6 +49,8 @@ an existing project's "tracking" has become scattered across chat, memory, and t
   re-argued from scratch.
 - Looking at the backlog as a whole tells a coherent story of where the product is headed, not
   just a pile of disconnected tasks.
+- Every user report and ask is preserved in their own words and traceable to the tickets it spawned,
+  and no reported issue counts as closed until the user has confirmed the fix live.
 
 ## Anti-patterns
 
@@ -50,3 +60,7 @@ an existing project's "tracking" has become scattered across chat, memory, and t
   re-proposed and re-argued every few months.
 - Letting "done" work linger in the active view indefinitely, so the active list stops being a
   reliable picture of what's actually outstanding.
+- Marking a user's reported issue "done" the moment the fix merges, without ever confirming it works
+  for them — the report should stay open until the owner verifies live.
+- Rewording or discarding the user's original report once a ticket exists — the raw report is the
+  record of what was actually asked, and paraphrasing it into a ticket loses that.
