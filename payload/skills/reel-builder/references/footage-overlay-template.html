@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1080,initial-scale=1" />
+<title>TOPIC reel — caption overlay (TEMPLATE)</title>
+<!--
+  ── reel-builder mode B: live-footage caption overlay TEMPLATE ──
+  This is a WORKED EXAMPLE (a Hinglish talking-head ad). Replace all caption
+  text + brand tokens (:root colors), keep the structure:
+    * body.vertical → captions upper third (1080×1920 output)
+    * body.square   → captions lower third (1080×1080 output, person on top)
+    * beats are .b1/.b2/… pills + .peak + .endcard
+    * @keyframes for each beat are INJECTED at build time by the build script
+      from measured cleaned-shot durations — author POSITION + COPY here, not
+      the timing percentages.
+  Caption craft: one short phrase per beat, echo the speaker's real words,
+  cream pill + ink text default, amber pill for accents, soft drop shadow.
+
+  Transparent overlay layer composited on top of stitched live footage.
+  Family-page sticker style: cream-paper pills + ink text + ink border +
+  chunky offset shadow. Two layouts driven by body class:
+
+    body          (vertical 1080×1920) — captions at upper third (y≈460)
+    body.square   (square 1080×1080)   — captions at lower third (y≈720)
+
+  Build script renders TWO overlay sequences (one per layout), composited
+  on the matching base (vertical or square-cropped).
+
+  Total duration is patched via --dur to match the cleaned reel length.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800;900&family=Patrick+Hand&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --amber: #f7a700;
+    --amber-soft: #ffb84d;
+    --amber-cream: #ffe2a0;
+    --cream: #fff7e3;
+    --paper: #fff4d6;
+    --ink: #1a1208;
+    --ink-soft: #2a1f10;
+    --ink-mute: rgba(26, 18, 8, .68);
+    --slash-deep: #b06b00;
+    /* family-young style — soft drop shadow, no chunky offset */
+    --shadow-pill: 0 14px 30px -10px rgba(0,0,0,.55), 0 4px 10px -2px rgba(0,0,0,.35);
+    --shadow-pill-sm: 0 8px 18px -6px rgba(0,0,0,.45), 0 3px 6px -2px rgba(0,0,0,.30);
+    --dur: 33.66s;
+  }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body {
+    margin: 0; padding: 0;
+    background: transparent;
+    color: var(--ink);
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .viewport { position: fixed; inset: 0; display: grid; place-items: center; background: transparent; }
+  .stage {
+    position: relative;
+    width: 1080px; height: 1920px;
+    overflow: hidden;
+    background: transparent;
+    transform-origin: center center;
+  }
+  body.square .stage { width: 1080px; height: 1080px; }
+  @media (max-width: 1080px), (max-height: 1920px) {
+    .stage { transform: scale(min(calc(100vw / 1080), calc(100vh / 1920))); }
+  }
+  @media (max-width: 1080px) {
+    body.square .stage { transform: scale(calc(100vw / 1080)); }
+  }
+
+  /* ───── Caption pill — brand-warm ─────
+     Default: cream bg + ink text. Variants: .amber (amber bg + ink text)
+     for accent/punch beats. Soft drop shadow, no border, 26px radius. */
+  .beat {
+    position: absolute;
+    left: 60px; right: 60px;
+    display: inline-flex; flex-direction: column; align-items: center;
+    padding: 22px 34px;
+    background: var(--cream);
+    color: var(--ink);
+    border-radius: 26px;
+    box-shadow: var(--shadow-pill);
+    opacity: 0;
+    z-index: 5;
+    animation-duration: var(--dur);
+    animation-timing-function: cubic-bezier(.22, .8, .32, 1);
+    animation-iteration-count: 1;
+    animation-fill-mode: both;
+  }
+  .beat.amber {
+    background: var(--amber);
+    color: var(--ink);
+  }
+  .beat .h {
+    font: 800 64px/1.06 'Inter';
+    letter-spacing: -.014em;
+    color: var(--ink);
+    text-align: center;
+  }
+  .beat .h .pop { color: var(--slash-deep); }
+  .beat.amber .h .pop { color: var(--ink); text-decoration: underline; text-decoration-thickness: 6px; text-underline-offset: 6px; }
+
+  /* ─── b1 hook beat 1 (0.0 → 1.5s) ─── */
+  .b1 { top: 440px; animation-name: b1-life; }
+  .b1 .h { font-size: 64px; }
+  @keyframes b1-life {
+    0%       { opacity: 0; transform: translate(0, 24px); }
+    1.111%   { opacity: 1; transform: translate(-2px, -3px); }
+    2.500%   { transform: translate(0, 0); }
+    3.889%   { opacity: 1; transform: translate(0, 0); }
+    4.167%   { opacity: 0; transform: translate(0, -10px); }
+    100%     { opacity: 0; }
+  }
+
+  /* ─── b2 hook beat 2 (1.5 → 3.4s) ─── */
+  .b2 { top: 430px; animation-name: b2-life; }
+  .b2 .h { font-size: 70px; }
+  .b2 .h .strike { position: relative; display: inline-block; color: var(--ink); }
+  .b2 .h .strike::after {
+    content: ""; position: absolute;
+    left: -6px; right: -6px; top: 54%; height: 8px;
+    background: var(--ink);
+    border-radius: 999px;
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation: strike-draw var(--dur) cubic-bezier(.6,.2,.3,1) 1 both;
+  }
+  @keyframes b2-life {
+    0%, 3.889%   { opacity: 0; transform: translate(0, 30px); }
+    4.167%       { opacity: 0; transform: translate(0, 30px); }
+    5.278%       { opacity: 1; transform: translate(-2px, -3px); }
+    6.500%       { transform: translate(0, 0); }
+    8.889%       { opacity: 1; transform: translate(0, 0); }
+    9.444%       { opacity: 0; transform: translate(0, -12px); }
+    100%         { opacity: 0; }
+  }
+  @keyframes strike-draw {
+    0%, 6.944% { transform: scaleX(0); }
+    7.500%     { transform: scaleX(1); }
+    8.889%     { transform: scaleX(1); }
+    9.444%     { transform: scaleX(0); }
+    100%       { transform: scaleX(0); }
+  }
+
+  /* ─── b3 compound subtitle (3.7 → 7.5s) ─── */
+  .b3 { top: 430px; animation-name: b3-life; }
+  .b3 .h { font-size: 64px; }
+  @keyframes b3-life {
+    0%, 9.722%   { opacity: 0; transform: translate(0, 26px); }
+    10.278%      { opacity: 0; transform: translate(0, 26px); }
+    11.389%      { opacity: 1; transform: translate(-2px, -3px); }
+    12.500%      { transform: translate(0, 0); }
+    19.722%      { opacity: 1; transform: translate(0, 0); }
+    20.833%      { opacity: 0; transform: translate(0, -12px); }
+    100%         { opacity: 0; }
+  }
+
+  /* ─── b4 equation (7.5 → 11.0s) ─── */
+  .b4 {
+    top: 460px; animation-name: b4-life;
+    background: transparent; box-shadow: none; padding: 0;
+  }
+  @keyframes b4-life {
+    0%, 20.278%  { opacity: 0; transform: translate(0, 26px); }
+    20.833%      { opacity: 0; transform: translate(0, 26px); }
+    21.944%      { opacity: 1; transform: translate(-2px, -3px); }
+    23.611%      { transform: translate(0, 0); }
+    29.444%      { opacity: 1; transform: translate(0, 0); }
+    30.556%      { opacity: 0; transform: translate(0, -12px); }
+    100%         { opacity: 0; }
+  }
+  .b4 .equation {
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px; flex-wrap: wrap;
+  }
+  .b4 .chip {
+    display: inline-flex; align-items: center;
+    padding: 14px 22px;
+    background: var(--cream);
+    color: var(--ink);
+    border-radius: 22px;
+    font: 800 42px/1 'Inter';
+    letter-spacing: -.012em;
+    box-shadow: var(--shadow-pill-sm);
+  }
+  .b4 .chip.warm  { background: var(--amber); color: var(--ink); }
+  .b4 .chip.glow  { background: var(--amber-cream); color: var(--ink); }
+  .b4 .op {
+    font: 900 52px/1 'Inter';
+    color: var(--cream);
+    text-shadow: 0 3px 10px rgba(0,0,0,.7);
+  }
+  .b4 .label-row {
+    margin-top: 14px; text-align: center;
+    font: 800 20px/1 'Inter';
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: .24em;
+    background: var(--amber);
+    border-radius: 999px;
+    padding: 8px 18px;
+    display: inline-block;
+    box-shadow: var(--shadow-pill-sm);
+  }
+  .b4 .ce { animation: chip-pop var(--dur) cubic-bezier(.22,.8,.32,1) 1 both; transform-origin: center; }
+  .b4 .ce.c1 { animation-delay: 0s; }
+  .b4 .ce.c2 { animation-delay: .12s; }
+  .b4 .ce.c3 { animation-delay: .24s; }
+  .b4 .ce.c4 { animation-delay: .36s; }
+  .b4 .ce.c5 { animation-delay: .48s; }
+  @keyframes chip-pop {
+    0%, 20.833% { transform: scale(0); opacity: 0; }
+    22.222%     { transform: scale(1.14); opacity: 1; }
+    23.611%     { transform: scale(1); }
+    29.444%     { transform: scale(1); opacity: 1; }
+    30.556%     { transform: scale(.96); opacity: 0; }
+    100%        { transform: scale(.96); opacity: 0; }
+  }
+
+  /* ─── b3b "Galti nahi karega." (11.0 → 14.5s) ─── */
+  .b3b { top: 460px; animation-name: b3b-life; }
+  .b3b .h { font-size: 76px; }
+  @keyframes b3b-life {
+    0%, 30.000%  { opacity: 0; transform: translate(0, 26px) scale(.96); }
+    30.556%      { opacity: 0; transform: translate(0, 26px) scale(.96); }
+    31.667%      { opacity: 1; transform: translate(-2px, -3px) scale(1.04); }
+    33.333%      { transform: translate(0, 0) scale(1); }
+    39.167%      { opacity: 1; transform: translate(0, 0) scale(1); }
+    40.278%      { opacity: 0; transform: translate(0, -12px) scale(.98); }
+    100%         { opacity: 0; }
+  }
+
+  /* ─── b5 status flip (14.8 → 18.8s) ─── */
+  .b5 { top: 430px; animation-name: b5-life; }
+  .b5 .h { font-size: 78px; }
+  @keyframes b5-life {
+    0%, 40.556%  { opacity: 0; transform: translate(0, 24px); }
+    41.111%      { opacity: 0; transform: translate(0, 24px); }
+    42.222%      { opacity: 1; transform: translate(-2px, -3px); }
+    43.611%      { transform: translate(0, 0); }
+    51.111%      { opacity: 1; transform: translate(0, 0); }
+    52.222%      { opacity: 0; transform: translate(0, -12px); }
+    100%         { opacity: 0; }
+  }
+
+  /* ─── b6 app reveal + badges (19.2 → 25.0s) ─── */
+  .b6 { top: 430px; animation-name: b6-life; }
+  .b6 .h { font-size: 58px; }
+  @keyframes b6-life {
+    0%, 52.778%  { opacity: 0; transform: translate(0, 26px); }
+    53.333%      { opacity: 0; transform: translate(0, 26px); }
+    54.444%      { opacity: 1; transform: translate(-2px, -3px); }
+    55.833%      { transform: translate(0, 0); }
+    68.333%      { opacity: 1; transform: translate(0, 0); }
+    69.444%      { opacity: 0; transform: translate(0, -12px); }
+    100%         { opacity: 0; }
+  }
+  /* badges removed — keep single-phrase pill clean */
+  @keyframes badge-pop {
+    0%, 53.333% { transform: scale(0); opacity: 0; }
+    55.556%     { transform: scale(1.12); opacity: 1; }
+    57.222%     { transform: scale(1); }
+    68.333%     { transform: scale(1); opacity: 1; }
+    69.444%     { transform: scale(.96); opacity: 0; }
+    100%        { transform: scale(.96); opacity: 0; }
+  }
+
+  /* ─── b7 first salary (25.0 → 27.8s) ─── */
+  .b7 { top: 430px; animation-name: b7-life; }
+  .b7 .h { font-size: 62px; }
+  @keyframes b7-life {
+    0%, 68.889%  { opacity: 0; transform: translate(0, 22px); }
+    69.444%      { opacity: 0; transform: translate(0, 22px); }
+    70.556%      { opacity: 1; transform: translate(-2px, -3px); }
+    71.944%      { transform: translate(0, 0); }
+    76.111%      { opacity: 1; transform: translate(0, 0); }
+    77.222%      { opacity: 0; transform: translate(0, -10px); }
+    100%         { opacity: 0; }
+  }
+
+  /* ─── peak "Bina poochhe" (27.8 → 29.2s) ─── */
+  .peak {
+    position: absolute; top: 460px; left: 0; right: 0;
+    text-align: center;
+    opacity: 0;
+    z-index: 7;
+    animation: peak-life var(--dur) cubic-bezier(.22,.8,.32,1) 1 both;
+  }
+  @keyframes peak-life {
+    0%, 76.667%  { opacity: 0; transform: scale(.6) rotate(-6deg); }
+    77.222%      { opacity: 0; transform: scale(.6) rotate(-6deg); }
+    78.333%      { opacity: 1; transform: scale(1.05) rotate(-1.2deg); }
+    79.444%      { transform: scale(.98) rotate(-1.2deg); }
+    80.556%      { transform: scale(1) rotate(-1.2deg); opacity: 1; }
+    81.111%      { opacity: 1; transform: scale(1) rotate(-1.2deg); }
+    81.667%      { opacity: 0; transform: scale(1.06) rotate(-1.2deg); }
+    100%         { opacity: 0; }
+  }
+  .peak .h {
+    display: inline-block;
+    padding: 24px 48px;
+    background: var(--amber);
+    color: var(--ink);
+    border-radius: 26px;
+    font: 900 96px/1 'Patrick Hand', 'Inter';
+    letter-spacing: -.01em;
+    box-shadow: var(--shadow-pill);
+  }
+
+  /* ─── b8 CTA price (29.6 → 32.6s) ─── */
+  /* Endcard now overlaps with b8 fade-out to eliminate the blank gap. */
+  .b8 { top: 420px; animation-name: b8-life; }
+  .b8 .h { font-size: 60px; }
+  @keyframes b8-life {
+    0%, 81.667%  { opacity: 0; transform: translate(0, 26px); }
+    82.222%      { opacity: 0; transform: translate(0, 26px); }
+    83.333%      { opacity: 1; transform: translate(-2px, -3px); }
+    84.722%      { transform: translate(0, 0); }
+    89.722%      { opacity: 1; transform: translate(0, 0); }
+    91.000%      { opacity: 0; transform: translate(0, -12px); }
+    100%         { opacity: 0; }
+  }
+  .price {
+    margin-top: 18px;
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 18px;
+    transform: scale(0);
+    animation: price-pop var(--dur) cubic-bezier(.22,.8,.32,1) 1 both;
+  }
+  @keyframes price-pop {
+    0%, 82.222%  { transform: scale(0); opacity: 0; }
+    83.611%      { transform: scale(1.14); opacity: 1; }
+    84.722%      { transform: scale(1); }
+    89.722%      { transform: scale(1); opacity: 1; }
+    91.000%      { transform: scale(.96); opacity: 0; }
+    100%         { transform: scale(.96); opacity: 0; }
+  }
+  .price .old {
+    position: relative;
+    font: 900 64px/1 'Inter';
+    color: rgba(26, 18, 8, .55);
+  }
+  .price .old::after {
+    content: ""; position: absolute;
+    left: -6px; right: -6px; top: 50%; height: 7px;
+    background: var(--amber);
+    border-radius: 999px;
+    transform-origin: left center;
+    transform: scaleX(0);
+    animation: strike-old var(--dur) cubic-bezier(.6,.2,.3,1) 1 both;
+  }
+  @keyframes strike-old {
+    0%, 83.611%  { transform: scaleX(0); }
+    85.000%      { transform: scaleX(1); }
+    89.722%      { transform: scaleX(1); }
+    91.000%      { transform: scaleX(0); }
+    100%         { transform: scaleX(0); }
+  }
+  .price .arrow {
+    font: 900 44px/1 'Inter';
+    color: var(--amber-soft);
+    margin-bottom: 8px;
+  }
+  .price .new {
+    display: inline-flex; align-items: baseline; gap: 4px;
+    padding: 12px 22px;
+    background: var(--amber);
+    color: var(--ink);
+    border-radius: 22px;
+    font: 900 76px/1 'Inter';
+    letter-spacing: -.02em;
+    box-shadow: var(--shadow-pill-sm);
+  }
+  .price .new .per { font: 800 22px/1 'Inter'; color: var(--ink); margin-left: 4px; }
+  /* .chai removed — keep b8 to single phrase + price */
+
+  /* ─── End card (overlaps with b8 exit to prevent blank gap) ─── */
+  /* Starts fade-in at 90.0%, fully opaque by 92.0%, holds till 100%. */
+  .endcard {
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 1920px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 100px 60px 0;
+    opacity: 0;
+    z-index: 8;
+    background:
+      radial-gradient(700px 500px at 50% 30%, var(--amber-cream) 0%, transparent 60%),
+      var(--amber);
+    animation: end-life var(--dur) cubic-bezier(.22, .8, .32, 1) 1 both;
+  }
+  @keyframes end-life {
+    0%, 89.500%  { opacity: 0; transform: scale(.98); }
+    90.000%      { opacity: 0; transform: scale(.98); }
+    91.500%      { opacity: 1; transform: scale(1.01); }
+    92.500%      { transform: scale(1); opacity: 1; }
+    100%         { opacity: 1; transform: scale(1); }
+  }
+  .endcard .badge {
+    display: inline-flex; align-items: center;
+    padding: 14px 28px;
+    background: var(--paper);
+    color: var(--ink);
+    border: 4px solid var(--ink);
+    border-radius: 999px;
+    font: 900 26px/1 'Inter';
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    box-shadow: var(--shadow-tile);
+    margin-bottom: 56px;
+  }
+  .endcard .headline {
+    font: 900 132px/1.02 'Inter';
+    letter-spacing: -.024em;
+    color: var(--ink);
+    text-align: center;
+  }
+  .endcard .headline .pop { color: #fff; text-shadow: 4px 5px 0 rgba(26, 18, 8, .25); }
+  .endcard .cta {
+    margin-top: 64px;
+    display: inline-flex; align-items: center; gap: 18px;
+    padding: 36px 80px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 999px;
+    font: 900 64px/1 'Inter';
+    letter-spacing: -.012em;
+    box-shadow: 8px 12px 0 rgba(26, 18, 8, .28);
+    animation: cta-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes cta-pulse {
+    0%, 100% { transform: translate(0, 0); }
+    50%      { transform: translate(-2px, -3px); }
+  }
+  .endcard .url {
+    margin-top: 36px;
+    font: 800 46px/1 'Inter';
+    color: var(--ink);
+    letter-spacing: -.012em;
+  }
+  .endcard .url .slash { color: var(--slash-deep); }
+
+  /* ════════════════════════════════════════════════════════════
+     SQUARE LAYOUT — text shifts to bottom of 1080×1080 frame,
+     where person occupies upper portion and text sits below.
+     ════════════════════════════════════════════════════════════ */
+  body.square .b1   { top: 740px; }
+  body.square .b2   { top: 700px; }
+  body.square .b3   { top: 720px; }
+  body.square .b4   { top: 780px; background: transparent; }
+  body.square .b3b  { top: 760px; }
+  body.square .b5   { top: 720px; }
+  body.square .b6   { top: 680px; }
+  body.square .b7   { top: 720px; }
+  body.square .peak { top: 780px; }
+  body.square .b8   { top: 660px; }
+
+  /* In square layout the end card claims the whole 1080×1080 canvas. */
+  body.square .endcard { height: 1080px; padding: 80px 60px 0; }
+  body.square .endcard .badge    { margin-bottom: 32px; font-size: 22px; padding: 10px 22px; }
+  body.square .endcard .headline { font-size: 92px; }
+  body.square .endcard .cta      { margin-top: 36px; font-size: 48px; padding: 26px 60px; }
+  body.square .endcard .url      { margin-top: 24px; font-size: 36px; }
+</style>
+</head>
+<body>
+  <div class="viewport">
+    <div class="stage">
+
+      <!-- Shot 1 — Hook -->
+      <div class="beat b1">
+        <div class="h">Aaj usse kuch nahi aata.</div>
+      </div>
+
+      <div class="beat b2 amber">
+        <div class="h">Pehli salary pe? <span class="strike">Sab.</span></div>
+      </div>
+
+      <!-- Shot 2 — Compounding -->
+      <div class="beat b3">
+        <div class="h">Pehli salary — 10 saal door.</div>
+      </div>
+
+      <div class="beat b4">
+        <div class="equation">
+          <span class="chip ce c1 warm">10 saal</span>
+          <span class="op ce c2">×</span>
+          <span class="chip ce c3">choti habit</span>
+          <span class="op ce c4">=</span>
+          <span class="chip ce c5 glow">10 saal aage</span>
+        </div>
+      </div>
+
+      <div class="beat b3b amber">
+        <div class="h">Galti <span class="pop">nahi</span> karega.</div>
+      </div>
+
+      <!-- Shot 3 — Status flip -->
+      <div class="beat b5 amber">
+        <div class="h">10 saal aage.</div>
+      </div>
+
+      <!-- Shot 4 — App reveal -->
+      <div class="beat b6">
+        <div class="h">Bachche ka apna money app.</div>
+      </div>
+
+      <!-- Shot 5a — Emotional peak -->
+      <div class="beat b7">
+        <div class="h">Pehli salary. Pehla credit card.</div>
+      </div>
+
+      <div class="peak">
+        <div class="h">Bina poochhe.</div>
+      </div>
+
+      <!-- Shot 5b — CTA -->
+      <div class="beat b8">
+        <div class="h">Lock ₹99 abhi.</div>
+        <div class="price">
+          <span class="old">₹199</span>
+          <span class="arrow">→</span>
+          <span class="new">₹99<span class="per">/mo</span></span>
+        </div>
+      </div>
+
+      <div class="endcard">
+        <div class="badge">Extrack Family</div>
+        <div class="headline">Join the<br/><span class="pop">waitlist.</span></div>
+        <div class="cta">Join now</div>
+        <div class="url">myextrack.com<span class="slash">/family</span></div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

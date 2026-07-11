@@ -1,0 +1,184 @@
+{
+  "env": {
+    "ECC_DISABLED_HOOKS": "pre:bash:gateguard-fact-force,pre:edit-write:gateguard-fact-force"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ' *)",
+      "Bash(yarn build:clean)",
+      "Bash(yarn install *)",
+      "Bash(yarn build:deterministic)",
+      "Bash(aws acm *)",
+      "Bash(aws sts *)",
+      "Bash(aws apigateway *)",
+      "Bash(aws cloudformation *)",
+      "Bash(gh release *)",
+      "Bash(npx eslint *)"
+    ],
+    "defaultMode": "auto"
+  },
+  "model": "opus[1m]",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__NODE__\" \"__CLAUDE_HOME__/hooks/caveman-activate.js\"",
+            "timeout": 5,
+            "statusMessage": "Loading caveman mode..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__NODE__\" \"__CLAUDE_HOME__/hooks/engineering-principles.js\" full",
+            "timeout": 5,
+            "statusMessage": "Loading engineering principles..."
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__NODE__\" \"__CLAUDE_HOME__/hooks/caveman-mode-tracker.js\"",
+            "timeout": 5,
+            "statusMessage": "Tracking caveman mode..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"__NODE__\" \"__CLAUDE_HOME__/hooks/engineering-principles.js\" nudge",
+            "timeout": 5,
+            "statusMessage": "Engineering principles"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "__CLAUDE_HOME__/hooks/rtk-rewrite.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"__CLAUDE_HOME__/hooks/caveman-statusline.sh\""
+  },
+  "enabledPlugins": {
+    "everything-claude-code@everything-claude-code": true,
+    "superpowers@claude-plugins-official": true,
+    "prompts.chat@prompts.chat": true,
+    "andrej-karpathy-skills@karpathy-skills": true,
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "claude-mem@thedotmack": false,
+    "chrome-devtools-mcp@chrome-devtools-plugins": false,
+    "superpowers@superpowers-marketplace": false,
+    "frontend-design@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "marketing-skills@marketingskills": true,
+    "ecc@ecc": true,
+    "playwright@claude-plugins-official": true,
+    "last30days@last30days-skill": true
+  },
+  "extraKnownMarketplaces": {
+    "everything-claude-code": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/affaan-m/everything-claude-code.git"
+      }
+    },
+    "prompts.chat": {
+      "source": {
+        "source": "github",
+        "repo": "f/prompts.chat"
+      }
+    },
+    "anthropic-agent-skills": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/skills"
+      }
+    },
+    "karpathy-skills": {
+      "source": {
+        "source": "github",
+        "repo": "forrestchang/andrej-karpathy-skills"
+      }
+    },
+    "ui-ux-pro-max-skill": {
+      "source": {
+        "source": "github",
+        "repo": "nextlevelbuilder/ui-ux-pro-max-skill"
+      }
+    },
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      }
+    },
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    },
+    "chrome-devtools-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "ChromeDevTools/chrome-devtools-mcp"
+      }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    },
+    "marketingskills": {
+      "source": {
+        "source": "github",
+        "repo": "coreyhaines31/marketingskills"
+      }
+    },
+    "impeccable": {
+      "source": {
+        "source": "github",
+        "repo": "pbakaus/impeccable"
+      }
+    },
+    "ecc": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/affaan-m/ECC.git"
+      }
+    },
+    "last30days-skill": {
+      "source": {
+        "source": "github",
+        "repo": "mvanhorn/last30days-skill"
+      }
+    }
+  },
+  "effortLevel": "high",
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark",
+  "skipAutoPermissionPrompt": true
+}
