@@ -4,6 +4,13 @@ Copy these, fill the `<...>` slots. The non-negotiables are pre-baked — do not
 Every delegation carries four parts: **objective, boundaries, tool/environment guidance, output
 contract** — a vague prompt produces overlapping, truncated, or unmergeable work.
 
+Shortcut: the non-negotiables are also installed as reusable subagents —
+`~/.claude/agents/worktree-builder.md` and `~/.claude/agents/branch-reviewer.md`. Dispatch with
+`agentType: 'worktree-builder'` / `'branch-reviewer'` (Workflow `agent()` or the Agent tool) and
+your prompt only needs the per-ticket slots (OBJECTIVE/SCOPE, HARD REPO RULES, BOUNDARIES,
+verify-script path; EXPECTED DELTA + #1 risk for the reviewer). The full templates below remain
+the source of truth and the fallback when the agents aren't installed.
+
 ## Contents
 
 - Builder prompt template

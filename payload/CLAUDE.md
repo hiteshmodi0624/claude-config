@@ -49,4 +49,8 @@ a SessionStart + per-prompt hook keeps them in view.
 Full review engine: `~/.claude/skills/_shared/review-checklist.md`. These global rules complement
 each repo's own CLAUDE.md (e.g. OpsPilot's hard rules); where a repo is stricter, the repo wins.
 
-@RTK.md
+<!-- RTK removed 2026-07-12: rtk binary was not installed, so its instructions + hook were
+     dead weight. RTK.md and hooks/rtk-rewrite.sh are preserved in
+     ~/.claude/backups/rtk-removed-2026-07-12/. To re-enable: install rtk
+     (github.com/rtk-ai/rtk), restore both files, re-add the PreToolUse Bash hook entry in
+     settings.json, and restore the line: @RTK.md -->
