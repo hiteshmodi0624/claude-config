@@ -1,71 +1,94 @@
 ---
 name: feature-start
-description: "Run BEFORE any new feature, architecture, product, or non-trivial change. Front-loads the five engineering principles (design-fit & business value, library-first, phased delivery, test-first/TDD, low-coupling/minimal-deps) as a preflight, then hands off to superpowers:brainstorming (or feature-factory in OpsPilot) for the design dialogue. Trigger: build/create/implement/add/'new feature'/'new architecture'/'new product'/redesign."
+description: "Engineering-principles preflight gate before feature design begins. Use when work is about to start on a new feature, architecture, product, or non-trivial change, or when the user says 'build', 'create', 'implement', 'add', 'new feature', 'new architecture', 'new product', 'redesign'. Not for trivial one-line fixes or reviewing finished work — use review-uncommitted or review-branch for that."
 ---
 
-# feature-start — engineering principles preflight
+# feature-start — engineering-principles preflight
 
-Invoke this the moment work is "build / create / implement / add / design a new feature,
-architecture, or product." It does NOT do the design dialogue itself — it front-loads the five
-principles, then delegates to brainstorming so the design is principled from line one.
+Run this the moment work turns into "build / create / implement / add / design something new" — before any design dialogue and before any code. **Answer the five engineering lenses first, then hand the answers to the design skill; never design or implement inside this skill.**
 
-Create a TodoWrite item per lens and complete them in order. Keep answers concrete; if a lens
-needs the user, ask one question at a time.
+## When to use / when NOT to use
 
-## Lens 1 — Design-fit & business value
+- Use for: any new feature, architecture, product, or non-trivial change about to begin.
+- Skip for: one-line fixes and typos (just do them); reviewing finished work (review-uncommitted / review-branch); mid-implementation drift (re-run only the affected lens, and apply the deviation-flag mandate below).
 
-- What business problem does this solve, in one sentence?
-- How does it fit the existing application — which subsystems it touches, what it reuses.
-- What is the **thinnest slice that delivers value**? (Feeds Lens 3.)
+## Procedure
 
-If it does not fit the app or has no clear business value, surface that to the user before
-designing anything.
+Create a task per lens (use whatever task tracking the harness provides) and complete them in order. Keep answers concrete; if a lens needs the user, ask one question at a time.
 
-## Lens 2 — Library-first (the "don't reinvent" rule)
+```
+Preflight checklist
+- [ ] Lens 1 — design-fit & business value stated
+- [ ] Lens 2 — build-vs-adopt decision recorded with reason
+- [ ] Lens 3 — ordered phase list; Phase 1 named
+- [ ] Lens 4 — Phase-1 test specs enumerated
+- [ ] Lens 5 — units/interfaces shaped; deps + IO injection stated
+- [ ] Preflight summary block filled
+- [ ] Handed off to the design skill with the block
+```
 
-- Search for an existing, vetted library/tool/service that already does this — including a
-  **web search** when the space is unfamiliar.
+### Lens 1 — design-fit & business value
+
+- State the business problem this solves in one sentence, and how it fits the existing application: subsystems touched, what it reuses.
+- Name the **thinnest slice that delivers value** (feeds Lens 3).
+- If it does not fit the app or has no clear business value, surface that to the user before designing anything.
+
+### Lens 2 — library-first (don't reinvent)
+
+- Search for an existing, vetted library/tool/service that already does this — including a **web search** when the space is unfamiliar.
 - Record what exists and the explicit **build-vs-adopt decision** with its reason.
-- Default to adopting a well-maintained library over hand-rolling; default to a small in-repo
-  unit over a heavy dependency for something trivial. State which way you went and why.
+- Defaults: a well-maintained library over hand-rolling; a small in-repo unit over a heavy dependency for something trivial. State which way you went and why.
 
-## Lens 3 — Phased delivery
+### Lens 3 — phased delivery
 
-- Decompose into **independently shippable phases**. Define **Phase 1 = the smallest useful
-  slice** that ships and can be reviewed on its own (e.g. "add a queue + error handling" before
-  the whole pipeline). List later phases as a backlog.
-- Target small PRs: ~200-400 changed lines review ~3x faster and carry ~40% fewer defects than
-  large ones. If a phase is much bigger, split it further.
+- Decompose into **independently shippable phases**. Phase 1 = the smallest useful slice that ships and can be reviewed on its own (e.g. "add a queue + error handling" before the whole pipeline).
+- Keep a phase to ~200-400 changed lines (reviews ~3x faster, ~40% fewer defects); split anything bigger.
 - Use feature toggles to merge incomplete-but-safe code rather than one giant branch.
-- Output: an ordered phase list. Only Phase 1 goes into this design cycle; the rest are
-  recorded for later spec→plan cycles.
+- Output: an ordered phase list. Only Phase 1 enters this design cycle; record the rest for later spec→plan cycles.
 
-## Lens 4 — Test-first (TDD-as-spec)
+### Lens 4 — test-first (TDD-as-spec)
 
-- Enumerate the **test specs that define "done"** for Phase 1 — the behaviors, edge cases, and
-  failure paths. These are written first and must fail before implementation.
-- The tests are the specification. No implementation is designed that no test pins down.
+- Enumerate the **test specs that define "done"** for Phase 1 — behaviors, edge cases, failure paths. These are written first and must fail before implementation.
+- The tests are the specification. Design nothing that no test pins down.
 
-## Lens 5 — Low-coupling / minimal-deps design
+### Lens 5 — low-coupling / minimal deps
 
-- Shape Phase 1 as **self-contained units** with one clear responsibility, communicating through
-  narrow interfaces, **unit-testable without heavy mocking**.
-- Minimize external dependencies and off-site/network calls — add them only when genuinely
-  required. Inject IO (clock, network, fs) so units stay pure and testable.
+- Shape Phase 1 as **self-contained units** with one clear responsibility, narrow interfaces, **unit-testable without heavy mocking**.
+- Minimize external dependencies and off-site/network calls — add them only when genuinely required. Inject IO (clock, network, fs) so units stay pure and testable.
+
+## Output contract — preflight summary block
+
+Fill this block (one line per lens) and carry it verbatim into the design dialogue:
+
+```
+PREFLIGHT SUMMARY
+Fit/value:   <business problem in one sentence; subsystems touched/reused>
+Build/adopt: <adopt <library> | build in-repo — one-line reason>
+Phases:      <Phase 1 = smallest useful slice; later phases listed>
+Test specs:  <the failing-test specs that define Phase-1 "done">
+Coupling:    <units + interfaces; IO injected; new deps: none | list>
+```
 
 ## Terminal step — hand off to the design dialogue
 
-Carry the five lenses' answers forward and invoke the right design skill:
+- If the current repo provides its own feature-design skill (check the available-skills list and the repo's CLAUDE.md; e.g. a `feature-factory`), invoke it — it already encodes the repo's hard rules.
+- Otherwise invoke `superpowers:brainstorming`.
 
-- **In the OpsPilot repo** → invoke `feature-factory` (its spec→test→impl loop already encodes
-  the repo's hard rules).
-- **Anywhere else** → invoke `superpowers:brainstorming`, feeding in the Phase-1 slice, the
-  build-vs-adopt decision, the phase list, and the test specs.
+Open the design dialogue with the preflight summary block. Do not write implementation code here — this skill ends by delegating to the design skill.
 
-Do not write implementation code here. This skill ends by delegating to the design skill.
+## Deviation-flag mandate (hard rule)
 
-## Deviation-flag mandate
+If at any point the work starts to ignore a principle — one giant unphased build, implementation before a failing test, a dependency added without a library-first check — stop and tell the user plainly:
 
-If at any point the work starts to ignore a principle (one giant unphased build, no failing
-tests first, a dependency added without a library-first check), stop and tell the user plainly:
 _"This was set as an engineering rule, and X is not following it."_
+
+WHY: this exact sentence is quoted by the user's global rules and hooks — it is the agreed drift signal. Keep the wording verbatim.
+
+## Common mistakes
+
+| Rationalization                                    | Reality                                                                                       |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| "The feature is obvious — skip the preflight"      | Obvious features are where scope balloons; five one-line answers cost minutes.                |
+| "I'll pick a library during implementation"        | A build-vs-adopt decision made after code exists is sunk cost, not a decision. Record it now. |
+| "Phase 1 is the whole feature; it's all connected" | If it cannot ship and be reviewed alone at ~200-400 lines, split further.                     |
+| "Design now, write tests later"                    | The tests are the spec; anything no test pins down is undesigned.                             |
