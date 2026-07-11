@@ -1,6 +1,6 @@
 ---
 name: repo-setup
-description: "Production-proven repo setup and audit checklists. Use when bootstrapping a new repository or standing up/auditing one concern — DNS/CDK, ticket board, one-command AWS deploy, billing, copy package, email, entitlements, analytics, landing-page performance, SEO/GEO/AIO, root scripts, local dev against real AWS — or when the user says 'set up the repo', 'bootstrap the project', 'audit our setup', 'bring the repo up to standard'. Not for designing features — use feature-start."
+description: "Production-proven repo setup and audit checklists. Use when bootstrapping a new repo or standing up/auditing one concern — DNS/CDK, ticket board, AWS deploy, billing, copy package, email, entitlements, analytics, landing performance, SEO/GEO/AIO, root scripts, local dev vs real AWS — or when the user says 'set up the repo', 'bootstrap the project', 'audit our setup', 'bring the repo up to standard'. Not for designing features — use feature-start."
 ---
 
 # Repository Setup
@@ -74,7 +74,7 @@ Same pattern, non-negotiable:
 - One `checklists/<topic>.md` per setup concern, written as checkbox items an agent can tick off.
 - Sourced from a repo where the practice actually worked — not a theoretical best-practice list.
   WHY: provenance is this skill's entire value; one invented item poisons trust in every row.
-- Open the file with a `Source pattern: <repo/area>` line (every existing checklist does).
+- Open the file with a `Source pattern: <repo/area>` line (every technical checklist does; process checklists open with a framing paragraph instead).
 - If the file exceeds 100 lines, add a `## Contents` section listing its H2/H3 headers so
   partial reads still reveal scope.
 - Add a router-table row above with a sharp "use for" phrase; mark process checklists `(process)`.

@@ -6,15 +6,23 @@ dev servers, builds, tests, e2e, env syncing, CDK deploys, CDN invalidation, DB 
 `cd`s into a workspace to run anything; every documented workflow is a root `package.json` script.
 Verified against the actual scripts, not assumed.
 
+## Contents
+
+- The pieces
+- Conventions (the rules that make root-run work)
+- Script families (quick reference)
+- The deploy pipeline (what `deploy:dev` / `deploy:prod` actually do)
+- Gotchas (verified, keep honest)
+
 ## The pieces
 
-| Path                                        | Role                                                                                                                                                    |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `package.json` (root)                       | The command surface. ~50 scripts, all namespaced `verb:qualifier:env` (`cdk:deploy:dev:stacks`, `integration:http`). `packageManager: yarn@1.22.22`, `engines.node >=20`. |
-| `turbo.json`                                | Deliberately tiny pipeline — 4 tasks only: `build` (deps `^build`, outputs `dist/**`, `.next/**` minus cache), `lint` (bare), `test` (deps `^build`), `dev` (deps `^build`, `cache:false`, `persistent:true`). No `globalEnv`/`globalDependencies`. |
-| `scripts/`                                  | Cross-workspace orchestration: `env-sync.mjs`, `deploy-dev.sh`/`deploy-prod.sh`, `verify-pre-deploy.sh`, `e2e.mjs`, `build-web-open-next.sh`/`build-ops-open-next.sh`, `invalidate-extrack-web-cdn.sh`, `docker-up.sh`/`docker-down.sh`, one-off data scripts (`backfill-*.mjs`, `indexnow-ping.mjs`) with co-located `*.test.mjs` run by `node --test scripts/`. |
-| `infrastructure/scripts/`                   | AWS plumbing wrappers used by every `cdk:*` script: `with-aws-profile.sh <profile> <cmd…>` (sets `AWS_PROFILE` only if unset AND no `AWS_ACCESS_KEY_ID` — so CI OIDC creds win) and `cdk-with-aws-env.sh` (validates profile via `sts get-caller-identity`, appends `--profile` + `-c` CDK context from `EXTRACK_PUBLIC_*`). |
-| `apps/*/package.json`, `packages/*/package.json` | Uniform per-workspace script contract: `build` / `lint` / `test` (+ `dev` only in web/api/ops). Root reaches them via turbo (fan-out) or `yarn workspace <name> <script>` (targeted). |
+| Path                                             | Role                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `package.json` (root)                            | The command surface. ~50 scripts, all namespaced `verb:qualifier:env` (`cdk:deploy:dev:stacks`, `integration:http`). `packageManager: yarn@1.22.22`, `engines.node >=20`.                                                                                                                                                                                         |
+| `turbo.json`                                     | Deliberately tiny pipeline — 4 tasks only: `build` (deps `^build`, outputs `dist/**`, `.next/**` minus cache), `lint` (bare), `test` (deps `^build`), `dev` (deps `^build`, `cache:false`, `persistent:true`). No `globalEnv`/`globalDependencies`.                                                                                                               |
+| `scripts/`                                       | Cross-workspace orchestration: `env-sync.mjs`, `deploy-dev.sh`/`deploy-prod.sh`, `verify-pre-deploy.sh`, `e2e.mjs`, `build-web-open-next.sh`/`build-ops-open-next.sh`, `invalidate-extrack-web-cdn.sh`, `docker-up.sh`/`docker-down.sh`, one-off data scripts (`backfill-*.mjs`, `indexnow-ping.mjs`) with co-located `*.test.mjs` run by `node --test scripts/`. |
+| `infrastructure/scripts/`                        | AWS plumbing wrappers used by every `cdk:*` script: `with-aws-profile.sh <profile> <cmd…>` (sets `AWS_PROFILE` only if unset AND no `AWS_ACCESS_KEY_ID` — so CI OIDC creds win) and `cdk-with-aws-env.sh` (validates profile via `sts get-caller-identity`, appends `--profile` + `-c` CDK context from `EXTRACK_PUBLIC_*`).                                      |
+| `apps/*/package.json`, `packages/*/package.json` | Uniform per-workspace script contract: `build` / `lint` / `test` (+ `dev` only in web/api/ops). Root reaches them via turbo (fan-out) or `yarn workspace <name> <script>` (targeted).                                                                                                                                                                             |
 
 ## Conventions (the rules that make root-run work)
 
@@ -33,7 +41,7 @@ Verified against the actual scripts, not assumed.
       `cdk:invalidate-web:prod`, `env:sync:local`. Bare name = dev default (`cdk:synth` →
       `cdk:synth:dev`). Grep-friendly and self-documenting.
 - [ ] **Env sync is a prefix step, not a separate ritual.** `dev` = `yarn env:sync:local && npx turbo
-      run dev`; `deploy:dev` = `yarn env:sync:dev && bash scripts/deploy-dev.sh`. One gitignored
+    run dev`; `deploy:dev` = `yarn env:sync:dev && bash scripts/deploy-dev.sh`. One gitignored
       root file per environment (`.env.local` / `.env.dev` / `.env.prod`, templates in
       `.env.*.example`) fans out to per-package env files via `scripts/env-sync.mjs`, each stamped
       "Generated — do not edit by hand". Keys are routed by prefix (`NEXT_PUBLIC_*`/`E2E_*` → web,
@@ -58,18 +66,18 @@ Verified against the actual scripts, not assumed.
 
 ## Script families (quick reference)
 
-| Family      | Root scripts                                                                                   | What actually runs                                                                                                     |
-| ----------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Dev         | `dev`, `dev:web-api`, `dev:ops`                                                                | env:sync:local, then turbo `dev`: web `next dev :3000`, api `tsx watch src/dev-server.ts` (Express wrapping the Lambda handler, `:3001`), ops `next dev :3010`. `dev:web-api` filters ops out (no env sync). |
-| Build/QA    | `build`, `build:deterministic`, `build:clean`, `lint`, `test`, `test:all`, `test:scripts`, `format` | turbo fan-out; `test:all` = `scripts/run-tests.sh` → `yarn test`; `test:scripts` = `node --test scripts/`.               |
-| Integration | `integration`, `integration:http`, `integration:e2e`, `integration:demo`, `integration:headed` | `integration-tests` workspace `run-all.mjs`: HTTP suite (`tsx --test --test-concurrency=1`) + Playwright vs deployed dev env; **skips silently (exit 0) without `E2E_SMOKE_EMAIL`/`E2E_SMOKE_PASSWORD`** (`REQUIRE_INTEGRATION_TESTS=1` to fail instead). |
-| E2E         | `e2e`, `e2e:phased`, `e2e:all`, `e2e:serial`                                                   | `scripts/e2e.mjs` → Playwright in `apps/integration-tests`. Default `--phased`: fast project parallel (4 workers), heavy project serial. Parses its own flags because yarn 1 forwards args unreliably. |
-| Verify gate | `verify:pre-deploy`                                                                             | `scripts/verify-pre-deploy.sh`: install --frozen-lockfile → lint → test → build:deterministic → web Playwright e2e (skippable via `VERIFY_SKIP_E2E=1`) → optional `cdk:synth` (`VERIFY_CDK_SYNTH=1`). Fail-closed. |
-| Deploy      | `deploy:dev`, `deploy:prod`                                                                     | Full pipeline (see below).                                                                                              |
-| CDK         | `cdk:synth[:dev\|:prod]`, `cdk:synth:dns:*`, `cdk:deploy:dev[:stacks]`, `cdk:deploy:prod[:stacks]`, `cdk:deploy:public-dns:*`, `cdk:invalidate-web:*`, `cdk:invalidate-ops:*` | Delegated to `@extrack/infrastructure` scripts through the profile wrappers. `:stacks` variant = deploy + CDN invalidations WITHOUT rebuilding web. Stack subset via `EXTRACK_CDK_STACKS` (default `--all`). |
-| AWS builds  | `build:web:aws`, `build:ops:aws`                                                                | OpenNext bundles: source `infrastructure/.env.cdk.<env>.local`, pull `NEXT_PUBLIC_*` (API URL, Cognito ids, site URL) from live CloudFormation outputs, `next build` (retry ×3 cleaning `.next`), `npx open-next build`. |
-| Secrets     | `check:deploy-secrets:dev/:prod`                                                                | api workspace `check-aws-deploy-secrets.ts` — validates the AWS Secrets Manager JSON before stack deploy (auto-run inside `cdk:deploy:*:stacks`). |
-| DB (local)  | `db:local:all/create/seed/wipe`, `docker:up/down`                                               | `@repo/database` `local-dynamodb.ts` against dockerized DynamoDB Local (`docker-compose.yml`, sole service, `:8000`, in-memory). **Optional path — see local-dev checklist; team dev runs against real AWS dev tables instead.** |
+| Family      | Root scripts                                                                                                                                                                  | What actually runs                                                                                                                                                                                                                                        |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dev         | `dev`, `dev:web-api`, `dev:ops`                                                                                                                                               | env:sync:local, then turbo `dev`: web `next dev :3000`, api `tsx watch src/dev-server.ts` (Express wrapping the Lambda handler, `:3001`), ops `next dev :3010`. `dev:web-api` filters ops out (no env sync).                                              |
+| Build/QA    | `build`, `build:deterministic`, `build:clean`, `lint`, `test`, `test:all`, `test:scripts`, `format`                                                                           | turbo fan-out; `test:all` = `scripts/run-tests.sh` → `yarn test`; `test:scripts` = `node --test scripts/`.                                                                                                                                                |
+| Integration | `integration`, `integration:http`, `integration:e2e`, `integration:demo`, `integration:headed`                                                                                | `integration-tests` workspace `run-all.mjs`: HTTP suite (`tsx --test --test-concurrency=1`) + Playwright vs deployed dev env; **skips silently (exit 0) without `E2E_SMOKE_EMAIL`/`E2E_SMOKE_PASSWORD`** (`REQUIRE_INTEGRATION_TESTS=1` to fail instead). |
+| E2E         | `e2e`, `e2e:phased`, `e2e:all`, `e2e:serial`                                                                                                                                  | `scripts/e2e.mjs` → Playwright in `apps/integration-tests`. Default `--phased`: fast project parallel (4 workers), heavy project serial. Parses its own flags because yarn 1 forwards args unreliably.                                                    |
+| Verify gate | `verify:pre-deploy`                                                                                                                                                           | `scripts/verify-pre-deploy.sh`: install --frozen-lockfile → lint → test → build:deterministic → web Playwright e2e (skippable via `VERIFY_SKIP_E2E=1`) → optional `cdk:synth` (`VERIFY_CDK_SYNTH=1`). Fail-closed.                                        |
+| Deploy      | `deploy:dev`, `deploy:prod`                                                                                                                                                   | Full pipeline (see below).                                                                                                                                                                                                                                |
+| CDK         | `cdk:synth[:dev\|:prod]`, `cdk:synth:dns:*`, `cdk:deploy:dev[:stacks]`, `cdk:deploy:prod[:stacks]`, `cdk:deploy:public-dns:*`, `cdk:invalidate-web:*`, `cdk:invalidate-ops:*` | Delegated to `@extrack/infrastructure` scripts through the profile wrappers. `:stacks` variant = deploy + CDN invalidations WITHOUT rebuilding web. Stack subset via `EXTRACK_CDK_STACKS` (default `--all`).                                              |
+| AWS builds  | `build:web:aws`, `build:ops:aws`                                                                                                                                              | OpenNext bundles: source `infrastructure/.env.cdk.<env>.local`, pull `NEXT_PUBLIC_*` (API URL, Cognito ids, site URL) from live CloudFormation outputs, `next build` (retry ×3 cleaning `.next`), `npx open-next build`.                                  |
+| Secrets     | `check:deploy-secrets:dev/:prod`                                                                                                                                              | api workspace `check-aws-deploy-secrets.ts` — validates the AWS Secrets Manager JSON before stack deploy (auto-run inside `cdk:deploy:*:stacks`).                                                                                                         |
+| DB (local)  | `db:local:all/create/seed/wipe`, `docker:up/down`                                                                                                                             | `@repo/database` `local-dynamodb.ts` against dockerized DynamoDB Local (`docker-compose.yml`, sole service, `:8000`, in-memory). **Optional path — see local-dev checklist; team dev runs against real AWS dev tables instead.**                          |
 
 ## The deploy pipeline (what `deploy:dev` / `deploy:prod` actually do)
 
@@ -81,7 +89,7 @@ Verified against the actual scripts, not assumed.
      `EXTRACK_SKIP_WEB_STACK=1` / `EXTRACK_SKIP_OPS_STACK=1`)
   5. `yarn cdk:synth[:prod]`
   6. `yarn cdk:deploy:dev|prod:stacks` — secrets preflight → `cdk deploy --require-approval never
-     --all` → CloudFront invalidation for web + ops stacks
+--all` → CloudFront invalidation for web + ops stacks
 - [ ] Profile/env exports live in the deploy script, not the operator's shell (`AWS_PROFILE`,
       `EXTRACK_PUBLIC_*` fallbacks, prod stack names `ExtrackApiProd`/`ExtrackAuthProd`/
       `ExtrackWebProd`/`ExtrackOpsProd`).

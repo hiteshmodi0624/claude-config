@@ -26,7 +26,7 @@ graphify export neo4j
 graphify export neo4j --push bolt://localhost:7687 --user neo4j --password PASSWORD
 ```
 
-Default URI is `bolt://localhost:7687`, default user is `neo4j`. Uses MERGE - safe to re-run without creating duplicates.
+Default URI is `bolt://localhost:7687`, default user is `neo4j`. Uses MERGE - safe to re-run without creating duplicates. Set `NEO4J_PASSWORD` in the environment instead of `--password` to keep the secret off argv.
 
 ### Step 7b - SVG export (only if --svg flag)
 
@@ -49,12 +49,17 @@ python3 -m graphify.serve graphify-out/graph.json
 This starts a stdio MCP server that exposes tools: `query_graph`, `get_node`, `get_neighbors`, `get_community`, `god_nodes`, `graph_stats`, `shortest_path`. Add to Claude Desktop or any MCP-compatible agent orchestrator so other agents can query the graph live.
 
 To configure in Claude Desktop, add to `claude_desktop_config.json`:
+
 ```json
 {
   "mcpServers": {
     "graphify": {
       "command": "python3",
-      "args": ["-m", "graphify.serve", "/absolute/path/to/graphify-out/graph.json"]
+      "args": [
+        "-m",
+        "graphify.serve",
+        "/absolute/path/to/graphify-out/graph.json"
+      ]
     }
   }
 }

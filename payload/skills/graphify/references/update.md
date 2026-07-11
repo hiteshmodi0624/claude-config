@@ -2,6 +2,13 @@
 
 Load this only when the user passed `--update` or `--cluster-only`. A first-time full build never reads this file.
 
+## Contents
+
+- For --update — incremental re-extraction (detect_incremental → detect-JSON shim → code-only check → merge via build_merge → graph diff)
+- For --cluster-only — rerun clustering on the existing graph
+
+Quick path when ONLY code files changed: `graphify update <path>` (CLI, AST-only, no LLM) rebuilds the graph directly; add `--force` when a refactor deleted code and the rebuild legitimately has fewer nodes. Use the manual flow below when docs/papers/images changed, deletions must be pruned, or the user wants the graph diff.
+
 ## For --update (incremental re-extraction)
 
 Use when you've added or modified files since the last run. Only re-extracts changed files - saves tokens and time.
@@ -65,7 +72,6 @@ If `code_only` is True: print `[graphify update] Code-only changes detected - sk
 
 If `code_only` is False (any changed file is a doc/paper/image): run the full Steps 3A–3C pipeline as normal.
 
-
 If no new files exist (only deletions), create an empty extraction so the merge step can prune:
 
 ```bash
@@ -78,7 +84,6 @@ Path('graphify-out/.graphify_extract.json').write_text(json.dumps({'nodes':[],'e
 "
 fi
 ```
-
 
 Then:
 

@@ -7,6 +7,17 @@ There is a self-contained DynamoDB-Local/Docker path in the repo (`docker:up` + 
 **this checklist deliberately skips it** — the team does not use it. Verified against the actual
 source, not the README (which still documents the local-Docker path as the default story).
 
+## Contents
+
+- The one crucial mechanism
+- Environment plumbing
+- What runs on `yarn dev`
+- What talks to REAL AWS from the laptop
+- What is intentionally OFF locally
+- New-machine startup sequence
+- The skipped path (know it exists, don't use it)
+- Gotchas (verified)
+
 ## The one crucial mechanism
 
 `packages/database/src/local/client.ts` (`getDynamoBaseClient`) branches purely on
@@ -49,11 +60,11 @@ is a hand edit on top (remove endpoint, add profile, real table names). Same for
 `yarn dev` = `yarn env:sync:local && npx turbo run dev` (turbo `dev`: `dependsOn ^build`,
 uncached, persistent). Three processes:
 
-| Process  | Command                                             | Port  | Notes                                                                                                      |
-| -------- | --------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------- |
-| api      | `tsx watch src/dev-server.ts` (`NODE_ENV=development`) | 3001  | Express wrapper converting each request to an API Gateway event and calling the **same Lambda handler** as prod (`src/lambda.ts`) — identical router locally. Raw-body carve-out for the Razorpay webhook path. `predev` builds `@repo/database` + runs env preflight. |
-| web      | `next dev --port 3000`                              | 3000  | `predev` builds web's upstream packages via turbo filter.                                                    |
-| ops      | `next dev --port 3010`                              | 3010  | Starts too (turbo dev is unfiltered); `yarn dev:web-api` excludes it.                                        |
+| Process | Command                                                | Port | Notes                                                                                                                                                                                                                                                                  |
+| ------- | ------------------------------------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| api     | `tsx watch src/dev-server.ts` (`NODE_ENV=development`) | 3001 | Express wrapper converting each request to an API Gateway event and calling the **same Lambda handler** as prod (`src/lambda.ts`) — identical router locally. Raw-body carve-out for the Razorpay webhook path. `predev` builds `@repo/database` + runs env preflight. |
+| web     | `next dev --port 3000`                                 | 3000 | `predev` builds web's upstream packages via turbo filter.                                                                                                                                                                                                              |
+| ops     | `next dev --port 3010`                                 | 3010 | Starts too (turbo dev is unfiltered); `yarn dev:web-api` excludes it.                                                                                                                                                                                                  |
 
 - [ ] **Web→API wiring, two modes** (`apps/web/next.config.mjs`):
   - Dev proxy: `/api/*` rewrites to `EXTRACK_DEV_API_ORIGIN ?? http://127.0.0.1:3001` — only when
@@ -90,15 +101,15 @@ uncached, persistent). Three processes:
 ## New-machine startup sequence
 
 - [ ] 1. Configure AWS named profile: `aws configure --profile extrack-dev` (or SSO). Everything
-      AWS-touching assumes `extrack-dev` (dev) / `extrack-prod` (deploys only).
+     AWS-touching assumes `extrack-dev` (dev) / `extrack-prod` (deploys only).
 - [ ] 2. `cp .env.local.example .env.local`, then convert it to the real-AWS variant:
-      **delete/leave-unset `DYNAMODB_ENDPOINT`**, add `AWS_PROFILE=extrack-dev`, replace
-      `extrack-local-*` table names with the real `ExtrackDatabaseDev-*` physical names (from CFN
-      outputs or the DynamoDB console), fill the real dev Cognito ids, `PORT=3001`,
-      `AWS_REGION=ap-south-1`, `NEXT_PUBLIC_API_URL=http://127.0.0.1:3001`.
+     **delete/leave-unset `DYNAMODB_ENDPOINT`**, add `AWS_PROFILE=extrack-dev`, replace
+     `extrack-local-*` table names with the real `ExtrackDatabaseDev-*` physical names (from CFN
+     outputs or the DynamoDB console), fill the real dev Cognito ids, `PORT=3001`,
+     `AWS_REGION=ap-south-1`, `NEXT_PUBLIC_API_URL=http://127.0.0.1:3001`.
 - [ ] 3. `yarn install` (yarn 1, frozen lockfile in CI).
 - [ ] 4. `yarn dev` → env fan-out + three dev servers. Log in through real dev Cognito; data
-      reads/writes hit real dev DynamoDB.
+     reads/writes hit real dev DynamoDB.
 - [ ] No Docker required. `yarn docker:up` / `yarn db:local:all` belong solely to the skipped
       emulator path.
 

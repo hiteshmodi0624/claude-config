@@ -1,15 +1,30 @@
 ---
 name: review-uncommitted
-description: "Review the current working-tree changes (staged + unstaged + untracked vs HEAD) against the five engineering principles before committing. Catches scope creep / unneeded dependency bumps, verifies the goal is actually complete, runs tests to green, and reports ONLY verified, non-hallucinated findings. Trigger: 'review uncommitted', 'review my changes', 'review before commit', 'review working tree'."
+description: "Reviews the working tree — staged, unstaged, and untracked changes vs HEAD — against the five engineering principles. Use before committing a finished change, or when the user says 'review uncommitted', 'review my changes', 'review before commit', 'review working tree'. Not for reviewing a whole branch or PR — use review-branch for that."
 ---
 
 # review-uncommitted
 
-Review everything not yet committed. Same engine as `review-branch`; the only difference is the
-**diff scope** below. The full review logic lives in the shared checklist — read it and follow
-all seven lenses:
+Review everything not yet committed. **Same 7-lens engine as `review-branch`; this wrapper
+only defines the diff scope.** The full review logic lives in the shared engine — read it and
+follow all seven lenses:
 
 **Read first:** `~/.claude/skills/_shared/review-checklist.md`
+Lenses: 1 scope discipline · 2 goal completeness · 3 principle adherence · 4 correctness ·
+5 tests to green · 6 anti-hallucination verify · 7 report.
+
+## Checklist
+
+Copy and tick off:
+
+```
+- [ ] Read ~/.claude/skills/_shared/review-checklist.md
+- [ ] Step 0: state the goal of the change in one sentence
+- [ ] Capture the scope with the commands below — including every untracked file
+- [ ] Run lenses 1–4 (parallelizable as subagents); lens 5 in the main context
+- [ ] Lens 6: adversarially refute every candidate; default-reject the unverifiable
+- [ ] Report in the shared format — verified findings only, candidates-vs-verified counts
+```
 
 ## Diff scope for this skill
 
@@ -17,28 +32,17 @@ Capture the complete uncommitted change set — staged, unstaged, AND untracked:
 
 ```bash
 git status --short                          # overview, including untracked
-git diff HEAD                               # staged + unstaged vs HEAD (tracked files)
+git diff HEAD                               # staged + unstaged vs HEAD (tracked files only)
 git ls-files --others --exclude-standard    # list untracked files...
 # ...then read each untracked file in full — new files are part of the change
 ```
 
-`git diff HEAD` omits untracked files, so reading them explicitly is mandatory — a new file is
-exactly where scope creep and missing tests hide.
+**Hard rule — untracked files are mandatory reading.** `git diff HEAD` silently omits them,
+and a brand-new file is exactly where scope creep, missing tests, and stub implementations
+hide. A review that skipped untracked files reviewed only part of the change.
 
-## Then run the shared 7-lens engine
+## Why this exists
 
-Against that scope, run lenses 1-7 from the shared checklist:
-
-1. Scope discipline — flag out-of-scope edits and **unneeded dependency/version bumps**.
-2. Goal completeness — is the change actually done? verdict COMPLETE / INCOMPLETE.
-3. Principle adherence — phased? test-first? low-coupling? library-first? flag deviations.
-4. Correctness bugs — reuse `/code-review` for the bug pass where available.
-5. Tests to green — run the suite + `tsc`/build; paste real output; loop to green.
-6. Anti-hallucination pass — verify every finding at `path:line`; default-reject the unverifiable.
-7. Output — verified findings only, in the shared report format.
-
-## Goal note
-
-The point of this skill is to catch problems **before they are committed** — especially scope
-creep and incomplete work — so the eventual PR is small, focused, and merges without many
-iterations. If the working tree is drifting from the five principles, say so plainly.
+Catch problems **before they are committed** — especially scope creep and incomplete work —
+so the eventual PR is small, focused, and merges without many iterations. If the working tree
+is drifting from the five engineering principles, say so plainly.

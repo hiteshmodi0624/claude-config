@@ -5,6 +5,15 @@ log --reverse` and the founding Claude Code session transcript — not a theoret
 was empty; everything below is what really happened, in order, including the mistakes caught the
 same day.
 
+## Contents
+
+- The founding prompt (verbatim intent, paraphrased length)
+- Commit 1 — `chore: bootstrap Plinth monorepo, governance, and Strategy v2 ticket board`
+- Commit 2 — a same-day correctness fix on the architecture just written
+- Commit 3 — `chore(ci): disable CI and deploy workflows until implementation is complete`
+- Full Inventory — à la carte menu (150 files, commit 1 alone)
+- Anti-patterns
+
 ## The founding prompt (verbatim intent, paraphrased length)
 
 > "There are three amazing repos locally present called FinanceTracker, Relay and OpsPilot. Review

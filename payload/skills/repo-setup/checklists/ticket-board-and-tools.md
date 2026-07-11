@@ -4,6 +4,15 @@ Source pattern: Plinth/SansadLens's `docs/tickets/` board + `tools/internal-ops/
 lives ONLY in each ticket's YAML frontmatter — the folder a ticket sits in is a storage _tier_, not
 the source of truth. Generated indexes are rebuilt from source, never hand-edited.
 
+## Contents
+
+- The pieces
+- Intake tier (inbox/) — the user's captured words
+- Setup (new repo)
+- Day-to-day (retiring a ticket, adding one, auditing)
+- `/tools` folder (non-shippable internal tooling)
+- Anti-patterns
+
 ## The pieces
 
 | Path                                           | Role                                                                                                                                                                                                      |
