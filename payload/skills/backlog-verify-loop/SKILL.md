@@ -41,8 +41,9 @@ round manually (run the phases by hand instead).
 
 4. **Terminate?** If this round filed **zero code-bug tickets** AND the backlog (`backlog` +
    `in-progress`) is **empty** → STOP and print the final report. Otherwise continue.
-5. **Repair.** Run [[backlog-detail]] on the new + remaining tickets, then [[backlog-drain]] to merge
-   them green. Then loop back to step 1.
+5. **Repair.** Run [[backlog-detail]] in **autonomous mode** (no human in the loop → skip its Drill
+   stage; the writer picks safe defaults and records `ASSUMPTION:` per ticket) on the new + remaining
+   tickets, then [[backlog-drain]] to merge them green. Then loop back to step 1.
 
 **Round report each time:** routes crawled · code bugs found+filed · data-gaps noted · tickets merged · gate result.
 

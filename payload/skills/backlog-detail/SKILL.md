@@ -1,63 +1,93 @@
 ---
 name: backlog-detail
-description: Use when a backlog of tickets/issues is too thin to implement directly and you want each one filled with exhaustive implementation detail (spec, exact files, failing-test plan, phases) BEFORE any code is written. Triggers - "detail the tickets", "flesh out the backlog", "add implementation detail", "make tickets buildable", "plan every ticket".
+description: Use when a backlog of tickets/issues must be planned so thoroughly that implementation needs zero decisions - brainstorming and drilling the user in plain language, writing exhaustive specs (files, signatures, exact test assertions), reviewing that detail, and splitting oversized tickets. Triggers - "detail the tickets", "plan every ticket", "ask me questions before building", "make tickets a weak model can build", "review the planning", "split big tickets".
 ---
 
 # backlog-detail
 
 ## Overview
 
-A separate, cheap PLANNING pass that turns thin tickets into buildable specs — run before any
-implementation. **Core principle: detailing only writes each ticket's own file, so every ticket is
-disjoint by construction** — fan them ALL out at once, no worktrees, no merge conflicts, no code touched.
+The PLANNING pass that turns thin tickets into paint-by-numbers specs — run before any code.
+**Core principle: the bar is a model that CANNOT make decisions can still implement it correctly. If
+any open decision remains in the ticket, it is not done.** Detail as much as possible now so
+implementation time is pure typing, not thinking.
 
-This is Phase 1 of the detail → drain → verify loop. See [[backlog-drain]] (Phase 2) and
-[[backlog-verify-loop]] (the outer loop).
+**The central constraint:** interactive drilling CANNOT happen inside a parallel headless fan-out —
+subagents can't talk to the user. So detailing is **4 stages**, not one pass.
 
-## When to use
+Phase 1 of the loop. See [[backlog-drain]] (Phase 2) and [[backlog-verify-loop]] (outer loop).
 
-- Tickets exist but say _what_ not _how_ — no file list, no test plan, no phases.
-- You are about to run parallel builders and want them on a short leash (a detailed ticket = a
-  meaningful "done").
-- Before `backlog-drain`, always — a builder with a vague ticket over-explores and truncates.
+## Two modes
 
-**Do NOT use** for a single ticket you're about to build yourself (just plan inline), or to write code.
+- **Interactive** (standalone `/backlog-detail`, user present): run all 4 stages — drill the user.
+- **Autonomous** (inside [[backlog-verify-loop]], user away): **skip the Drill stage**; the writer
+  picks the conservative/reversible option for each decision and records
+  `ASSUMPTION: <choice> — chosen because <reason>` in the ticket. The loop never blocks on a human.
 
-## Procedure
+## The 4 stages
 
-1. **Enumerate the backlog.** If the repo has a board (`yarn board:waves` / `docs/tickets/`), read the
-   active set (status `backlog`/`in-progress`); **skip any icebox/forbidden tier**. Otherwise the
-   backlog is the set of open task files / issues.
-2. **Fan out one detailer per ticket** via a Workflow `parallel()` barrier — docs-only work, so
-   **NO `isolation:'worktree'`** (they each touch only their one ticket file; zero collision).
-   Model: **sonnet**; **opus** for any ticket whose footprint spans >1 package/module.
-3. **Each detailer, for its ONE ticket**, appends an `## Implementation Detail` section (leaving
-   frontmatter + existing body intact), grounded in the REAL code it reads (grep/graphify — no
-   hand-waving, no `TODO`/`TBD`):
-   - **SPEC** — exact behaviour; the product/architecture invariant it must respect (quote it); design-fit.
-   - **FILES** — every path to add/change + one line each.
-   - **FAILING TESTS FIRST** — the test cases (names + assertions) that ARE the spec, and which
-     manifest `test` script each new test file registers in (unregistered test = never runs).
-   - **PHASES** — smallest useful slice first, then the rest; must-have vs nice-to-have.
-   - **IO / DEPS** — injected IO (fetch/clock), boundary schema, any new env var (+ example-file line).
-   - **COST** — only if it adds/alters an LLM call: model, est cost/1000 records, cache plan.
-   - **CROSS-PACKAGE RISK** — shared types/barrels/enums other modules assert on.
-4. **Gate + commit.** Run the board check (`yarn board:check` if present). Report a table:
-   ticket → files-touched → phase count. Commit as `docs(tickets): implementation detail for backlog`.
+1. **Gather (parallel, sonnet, cheap).** One agent per ticket reads the REAL code (grep/graphify) and
+   emits ONLY the list of open decisions — `{decision, why it matters, options, recommended}`. No prose,
+   no writing yet. Docs-read-only, no worktrees.
+2. **Drill (main thread, interactive mode only).** Consolidate + dedupe every open decision across all
+   tickets. Ask the user with **AskUserQuestion**, obeying the Question Rules below. **Ask only where a
+   decision genuinely forks the build**; safe-defaultable ones you resolve silently and note. Batch —
+   never one-ticket-at-a-time drip.
+3. **Write (parallel, sonnet; opus if >1 package).** One detailer per ticket writes the exhaustive
+   `## Implementation Detail` section (frontmatter + existing body intact), baking in the answers. It
+   MUST contain every field in the Rubric — no `TODO`/`TBD`. Touches only its own ticket file.
+4. **Review (parallel, opus).** A detail-reviewer scores each ticket against the Rubric and returns
+   `COMPLETE | NEEDS-DETAIL | SPLIT`. `NEEDS-DETAIL` → back to Write with the gaps named. `SPLIT` →
+   auto-split (below). Only `COMPLETE` tickets pass. This is the "properly reviewed" guarantee.
+
+Mechanics: Workflow `parallel()` for Gather → main-thread Drill → Workflow `pipeline(write, review)`.
+Autonomous mode collapses to just `pipeline(write, review)`.
+
+## The Rubric (writer fills, reviewer enforces — "zero decisions left")
+
+- **SPEC** — exact behaviour; the product/architecture invariant it respects (quote it); design-fit.
+- **FILES** — every path to add/change, each with the **function/type signatures** to write.
+- **FAILING TESTS FIRST** — exact test names + the literal assertions; which manifest `test` script each registers in.
+- **PHASES** — smallest useful slice first, then rest; must-have vs nice-to-have.
+- **IO / DEPS** — injected IO, boundary schema, any new env var (+ example-file line).
+- **DECISIONS RESOLVED** — each drilled answer (or `ASSUMPTION:` in autonomous mode), baked into the spec.
+- **COST** — only if it adds/alters an LLM call: model, est cost/1000 records, cache plan.
+- **CROSS-PACKAGE RISK** — shared types/barrels/enums other modules assert on.
+
+Reviewer rejects if a builder would have to **choose** anything: an unnamed file, a vague "handle
+errors", a test without assertions, an interface left open.
+
+## Question Rules (Drill stage)
+
+- **Plain language, never raw-technical.** Translate the trade-off into a product/UX choice. Not "sync
+  vs batch Anthropic call" → "process now (costs more, instant) or overnight (cheaper, next-day)?".
+- **Multiple-choice with a recommendation first**, each option one plain sentence of consequence.
+- **Only where it forks the build.** No decision to make → don't ask.
+- **Batch** across tickets in as few AskUserQuestion calls as possible.
+
+## Auto-split (Review verdict SPLIT)
+
+Split when a ticket spans cleanly-separable packages, exceeds ~400 changed lines, or holds multiple
+independently-shippable phases. Create child tickets (`<id>-1`, `<id>-2`, …) with a `depends_on`
+chain + disjoint `touches`, retire/repoint the parent per the board rules, `board:check`. Better five
+small leashed tickets than one a weak model will fumble.
 
 ## Model / effort
 
-| Ticket                                   | Model  | Effort      |
-| ---------------------------------------- | ------ | ----------- |
-| Single package/module                    | sonnet | medium      |
-| Spans >1 package, or heavy investigation | opus   | medium-high |
+| Stage                           | Model    | Effort      |
+| ------------------------------- | -------- | ----------- |
+| Gather / Write (single package) | sonnet   | medium      |
+| Write (spans >1 package)        | opus     | medium-high |
+| Review                          | **opus** | high        |
 
 ## Common mistakes
 
-| Mistake                         | Reality                                                                             |
-| ------------------------------- | ----------------------------------------------------------------------------------- |
-| Give detailers worktrees        | Docs-only work — worktrees are pure cost, no collision to prevent                   |
-| Let a detailer touch code       | This phase writes SPECS, not implementations. Code is [[backlog-drain]].            |
-| Detail icebox/forbidden tickets | Wasted work — they'll never build. Skip that tier.                                  |
-| Vague "improve X" spec          | A builder can't leash to it → over-explores → truncates. Demand files + test names. |
-| Skip the failing-test plan      | The test IS the spec (TDD). No test plan = the builder guesses the contract.        |
+| Mistake                                   | Reality                                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| Drill inside the parallel fan-out         | Subagents can't reach the user — Gather first, then Drill in the main thread         |
+| Ask raw-technical questions               | The owner isn't building it — translate to a plain product choice + a recommendation |
+| Ask about everything                      | Only decisions that fork the build; safe-defaultable ones you resolve and note       |
+| Ship a ticket with an open choice         | That choice becomes a builder guess — reviewer must reject it                        |
+| One giant ticket a weak model will fumble | Split into leashed child tickets with depends_on                                     |
+| Skip the review stage                     | "Detailed" ≠ "complete"; the rubric review is what makes it weak-model-safe          |
+| Block the autonomous loop on a question   | In-loop = skip Drill, pick safe default, flag `ASSUMPTION:`                          |
