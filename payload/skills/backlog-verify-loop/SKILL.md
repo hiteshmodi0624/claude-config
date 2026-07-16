@@ -64,11 +64,16 @@ Wrap the loop with the /loop skill (self-paced) so it survives across turns and 
 
 Never hardcode model ids; pick by capability tier when spawning.
 
-| Role                                         | Tier                             | Why                                                   |
-| -------------------------------------------- | -------------------------------- | ----------------------------------------------------- |
-| Orchestrator (this session)                  | strongest available, high effort | owns merge, gate, and the code-vs-data call           |
-| Browser crawler                              | mid-tier workhorse               | mechanical navigation + assertions                    |
-| Code-vs-data classifier (ambiguous findings) | strongest available              | this judgement is the loop's single failure-mode risk |
+| Role                                         | Tier / effort                       | Why                                                   |
+| -------------------------------------------- | ----------------------------------- | ----------------------------------------------------- |
+| Orchestrator (this session)                  | the session itself — no spawn       | owns merge, gate, and the code-vs-data call           |
+| Browser crawler                              | sonnet, low–medium effort           | mechanical navigation + assertions                    |
+| Code-vs-data classifier (ambiguous findings) | opus, high effort                   | this judgement is the loop's single failure-mode risk |
+
+The classifier is a judging role — phrase its prompt as one ("judge whether this finding is a
+code bug or missing data…") so the model-routing guard recognizes the opus justification. Builders
+and reviewers inside the drain rounds follow orchestrating-parallel-agents routing (builders
+sonnet/medium; reviewers opus/high; per-ticket `[ESCALATED: <reason>]` only).
 
 ## Common mistakes
 

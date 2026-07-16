@@ -25,7 +25,7 @@ Each round executes the engine's round checklist. The drain contract on top:
 
 1. **Verify-not-done before any dispatch.** One grep/ls against the base branch per candidate; already shipped → retire with the proving SHA, dispatch nothing. WHY: roughly 1 in 3 backlog items is already shipped — each stale dispatch burns a whole agent run.
 2. **Partition into a conflict-free wave.** If the repo has board tooling, use it (e.g. `yarn board:waves` prints tickets with satisfied dependencies and non-colliding touched paths); otherwise hand-partition by disjoint file footprints. Width = the wave's disjoint count, never the backlog size. A phased chain contributes only its ONE unblocked head this round.
-3. **Build + review through the engine's pipeline.** Nothing merges inside the workflow — it returns verified branches.
+3. **Build + review through the engine's pipeline.** Nothing merges inside the workflow — it returns verified branches. Model routing (auto-enforced): builders default `sonnet` + effort `medium`; reviewers `opus` + effort `high`; escalate a single ticket to `opus` only with `[ESCALATED: <reason>]` after a sonnet attempt failed or the ticket is pre-flagged complex — never the whole wave.
 4. **You merge serially, then run the FULL gate** (build + test + lint) once after ALL the round's merges — cross-package breaks only surface on the integrated state. Paste real output; fix forward.
 5. **Bookkeep — the round is not over until:**
    - every merged ticket is retired with its proving merge SHA (via board tooling if present, e.g. set status then `yarn board:merge <id>`);
