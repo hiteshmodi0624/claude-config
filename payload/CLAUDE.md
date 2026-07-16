@@ -14,8 +14,21 @@
 Every non-trivial task follows the delegate-first loop in @WORKFLOW.md:
 **research (if unfamiliar) → plan via subagent → approval gate if large → implement one phase at
 a time via subagents → independent review subagent → done-criteria**. The main agent coordinates;
-it does not deep-plan or bulk-implement in its own context. Effort/model per subagent = minimum
-that fits the task; never hardcode model ids.
+it does not deep-plan or bulk-implement in its own context.
+
+# Model & Effort Routing (STRICT — auto-enforced)
+
+**Default-cheap, escalate-on-evidence.** Full matrix in @WORKFLOW.md; summary:
+
+- **haiku / low** — mechanical scans, greps, formatting, triage.
+- **sonnet / medium** — DEFAULT for ALL implementation, research, and explore subagents.
+- **opus / high** — planning + review/verification ONLY, or one task explicitly escalated with
+  `[ESCALATED: <reason>]` after a sonnet attempt failed.
+- **Every subagent spawn sets `model` explicitly** — an omitted model inherits the expensive
+  session model. Never hardcode dated model ids; aliases only.
+- Enforced by the PreToolUse hook `hooks/model-routing-guard.js`: it BLOCKS unjustified
+  opus/fable-tier spawns, model-less generic spawns, and Workflow scripts without model routing.
+  If it blocks a call, fix the routing — do not work around the hook.
 
 # Engineering Principles (STRICT)
 

@@ -33,16 +33,32 @@ delegation is practical.
 6. **Definition of done:** implementation finished · tests pass · lint passes · independent
    review completed · remaining risks documented · summary of changes delivered.
 
-## Reasoning effort & model selection (when spawning subagents)
+## Model & effort routing (STRICT — auto-enforced by `hooks/model-routing-guard.js`)
 
-- Pick the **minimum effort that fits the task** — never default to high:
-  - **low** — formatting, docs, simple fixes, small refactors, straightforward tests.
-  - **medium** — normal feature work, moderate debugging, API/integration work.
-  - **high** — architecture, complex debugging, performance, migrations, concurrency,
-    distributed systems, security-sensitive work.
-- **Never hardcode a model id** in instructions or automation. Choose per task when spawning:
-  a cost-effective model when it is sufficient; a more capable model only when it provides
-  meaningful benefit. When unsure, omit the override and inherit the session model.
+**Default-cheap, escalate-on-evidence.** Omitting `model` on a subagent inherits the session
+model — usually the MOST expensive tier — so **every subagent spawn sets `model` explicitly**
+(and `effort` where the mechanism supports it: Workflow `agent()` opts, agent frontmatter).
+The strong-orchestrator + cheap-workers pattern retains ~96% of all-top-tier quality at roughly
+half the cost (Anthropic multi-agent benchmarks); the strong reviewer is what makes the cheap
+builder safe.
+
+| Role                                                        | Model                     | Effort |
+| ----------------------------------------------------------- | ------------------------- | ------ |
+| Mechanical: scans, greps, formatting, doc lookups, triage    | haiku                     | low    |
+| Research / explore / codebase reading                        | sonnet (haiku if trivial) | low–medium |
+| Implementation / builders — **default for ALL code-writing** | sonnet                    | medium |
+| Hard implementation (cross-package, concurrency, migrations, security-sensitive, design-critical UI) | sonnet first at high effort; opus only via escalation | high |
+| Planning / architecture                                      | opus (or inherit session) | high   |
+| Review / verification / judging (never the implementer)      | opus                      | high   |
+| Orchestration                                                | the main session itself   | —      |
+
+- **Escalation is evidence-based and per-task**: escalate one task to opus with an
+  `[ESCALATED: <reason>]` marker only after a sonnet attempt fails, truncates, or a reviewer
+  bounces it — never pre-emptively for a whole batch.
+- Prefer dropping **effort** before dropping model tier, and raising effort before raising tier.
+- **Never hardcode dated model ids** — use the `haiku` / `sonnet` / `opus` aliases only.
+- The PreToolUse hook blocks: opus/fable-tier spawns whose prompt is not plan/review/escalated,
+  model-less spawns of generic agent types, and Workflow scripts with no model routing.
 
 ## Context hygiene
 

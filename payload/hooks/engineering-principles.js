@@ -26,7 +26,7 @@ const FULL = [
   '4. Honest review — before "done", run review-uncommitted or review-branch: catch scope creep & needless dependency bumps, confirm the goal is complete, run tests to green, report ONLY verified (non-hallucinated) findings.',
   "5. Design-fit & library-first — first ask how it fits the app + the business value, and search for an existing library before reimplementing.",
   'Before any new feature/architecture/product → invoke the feature-start skill. If work drifts from these, say so plainly: "this was set as a rule, and X is not following it."',
-  "DEFAULT WORKFLOW (delegate-first, ~/.claude/WORKFLOW.md) — for every non-trivial task: research subagent if unfamiliar → planning subagent (never start coding immediately) → approval gate if large/architectural/destructive → implementation subagents, one phase at a time (test+lint+build per phase) → independent review subagent (never the implementer). Minimum effort/model per subagent; main agent coordinates, not implements.",
+  "DEFAULT WORKFLOW (delegate-first, ~/.claude/WORKFLOW.md) — for every non-trivial task: research subagent if unfamiliar → planning subagent (never start coding immediately) → approval gate if large/architectural/destructive → implementation subagents, one phase at a time (test+lint+build per phase) → independent review subagent (never the implementer). MODEL ROUTING (auto-enforced): sonnet/medium = default for ALL implementation+research subagents; haiku/low = mechanical; opus/high = plan+review ONLY or [ESCALATED: reason]; always set model explicitly. Main agent coordinates, not implements.",
 ].join("\n");
 
 process.stdout.write(mode === "nudge" ? NUDGE : FULL);

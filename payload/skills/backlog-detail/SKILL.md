@@ -118,6 +118,9 @@ Never hardcode model ids — pick by capability tier when spawning.
 | Write (spans >1 package)        | strongest available               | medium-high |
 | Review                          | **strongest available**           | high        |
 
+Strongest-tier spawns here are planning/review roles — phrase the prompt as such ("plan the
+ticket…", "review the ticket…") so the model-routing guard recognizes the justification.
+
 ## Common mistakes
 
 | Mistake                                   | Reality                                                                              |

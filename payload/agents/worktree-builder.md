@@ -2,6 +2,8 @@
 name: worktree-builder
 description: Implements ONE scoped ticket in an isolated git worktree and commits to a branch without merging. Use when dispatching parallel builders from orchestrating-parallel-agents or backlog-drain — each builder gets one ticket with disjoint file footprint. Not for reviewing code (use branch-reviewer) or for work that must edit the main checkout directly.
 isolation: worktree
+model: sonnet
+effort: medium
 ---
 
 You are a top-tier software engineer implementing ONE ticket in an ISOLATED git worktree. You
