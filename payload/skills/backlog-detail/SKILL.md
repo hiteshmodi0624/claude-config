@@ -106,7 +106,7 @@ The writer copies this block into the ticket and fills every slot; the reviewer 
 
 ## Auto-split (Review verdict SPLIT)
 
-Split when a ticket spans cleanly-separable packages, exceeds ~400 changed lines, or holds multiple independently shippable phases — better five small leashed tickets than one a weak model will fumble. Create child tickets `<id>-1`, `<id>-2`, … with a `depends_on` chain and disjoint `touches`; retire/repoint the parent per the repo's board rules. If the repo has board tooling (e.g. `yarn board:check`), run it; otherwise verify ids, dependency links, and path disjointness by hand.
+Split when a ticket spans cleanly-separable packages, exceeds ~400 changed lines, or holds multiple independently shippable phases — better five small leashed tickets than one a weak model will fumble. Create child tickets `<id>-1`, `<id>-2`, … with a `depends_on` chain and disjoint `touches`; retire/repoint the parent per the repo's board rules. If the repo has a ticket board (a `board:*` CLI — see the Ticket Boards standard in `~/.claude/CLAUDE.md`), keep each child `id` equal to its filename stem, never add a `feature:` key, and run `yarn board:check` to validate ids, cycles, tier↔status, and path disjointness; otherwise verify ids, dependency links, and path disjointness by hand.
 
 ## Model / effort per stage
 

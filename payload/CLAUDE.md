@@ -30,6 +30,33 @@ it does not deep-plan or bulk-implement in its own context.
   opus/fable-tier spawns, model-less generic spawns, and Workflow scripts without model routing.
   If it blocks a call, fix the routing — do not work around the hook.
 
+# Ticket Boards (board-driven repos)
+
+Some repos dispatch work through a **file-based ticket board** — Markdown tickets under a
+`docs/tickets/`-style tree with a `board:*` CLI (`board:check`, `board:build`, `board:waves`,
+`board:merge`). When a repo has one, the board is the roadmap and the unit of dispatch; honour its
+conventions and never route around them. A repo's own CLAUDE.md wins on specifics; the portable
+conventions are:
+
+- **Tier = directory, status = frontmatter, feature = directory name.** A ticket's tier
+  (`backlog`/`icebox`/`archive`) is the directory it sits in; its `status:` is a frontmatter key
+  legal for that tier; its feature is the folder name. Never infer status from the path, and never
+  add a `feature:` key — a duplicated fact eventually disagrees with itself.
+- **The frontmatter schema is closed.** An unknown key (including a typo) is a validation error,
+  not an ignored field. Arrays are written inline on one line.
+- **Generated index files are never hand-edited.** `_board/`-style outputs come from `board:build`;
+  a manual edit is silently overwritten. If a number looks wrong, fix the ticket and rebuild.
+- **Retire through the tool, never `git mv`.** `board:merge <id>` moves the file to `archive/`,
+  appends the archive record, and rebuilds the index atomically; a hand move desyncs all three.
+- **`touches` drives parallelism.** `board:waves` uses each ticket's `depends_on` + `touches` to
+  compute dependency- and file-collision-safe waves — never leave `touches` empty or stale, or two
+  parallel builders collide on the same file.
+
+Golden path for one ticket: pick from a wave → `git checkout -b ticket/<id>` → set
+`status: in-progress` → failing tests first → minimum implementation → repo gate green → independent
+review → set `status: merged` + fill `solved:` → `board:merge <id>` → merge the branch. Run
+`board:check` before any commit that touches the ticket tree.
+
 # Engineering Principles (STRICT)
 
 These five principles apply to ALL code work in EVERY repository. They override default

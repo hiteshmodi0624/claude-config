@@ -28,7 +28,7 @@ Each round executes the engine's round checklist. The drain contract on top:
 3. **Build + review through the engine's pipeline.** Nothing merges inside the workflow — it returns verified branches. Model routing (auto-enforced): builders default `sonnet` + effort `medium`; reviewers `opus` + effort `high`; escalate a single ticket to `opus` only with `[ESCALATED: <reason>]` after a sonnet attempt failed or the ticket is pre-flagged complex — never the whole wave.
 4. **You merge serially, then run the FULL gate** (build + test + lint) once after ALL the round's merges — cross-package breaks only surface on the integrated state. Paste real output; fix forward.
 5. **Bookkeep — the round is not over until:**
-   - every merged ticket is retired with its proving merge SHA (via board tooling if present, e.g. set status then `yarn board:merge <id>`);
+   - every merged ticket is retired with its proving merge SHA (via board tooling if present: set `status: merged` + `solved:`, then `yarn board:merge <id>` — never `git mv` into `archive/`, which desyncs the generated `_board/` index);
    - every deferred slice has a filed follow-up ticket — no buried work;
    - YOUR worktrees/branches are pruned, and HEAD/base re-checked for drift.
 6. **Next round.** Just-merged chain heads are now unblocked — recompute the wave. Drained = no buildable ticket remains, not "this round finished".

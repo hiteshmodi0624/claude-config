@@ -44,7 +44,7 @@ Composes backlog-detail (Phase 1, autonomous mode) → backlog-drain (Phase 2) �
 
    | Finding                                                                            | Verdict                                                                                                              |
    | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-   | 500 / crash / hydration error / broken internal link / unexpected full-page reload | **CODE BUG** → file a ticket (proper frontmatter; run the repo's board check if it has one, e.g. `yarn board:check`) |
+   | 500 / crash / hydration error / broken internal link / unexpected full-page reload | **CODE BUG** → file a ticket (proper frontmatter — feature comes from the directory, never a `feature:` key; run `yarn board:check` if the repo has a board) |
    | Page 200 but empty because no data is ingested yet                                 | **NOT a failure** → log a data-coverage note; do NOT file a ticket, do NOT loop on it                                |
    | Slow / cosmetic                                                                    | nit → optional ticket, never a loop blocker                                                                          |
 

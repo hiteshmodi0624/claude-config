@@ -33,6 +33,16 @@ delegation is practical.
 6. **Definition of done:** implementation finished · tests pass · lint passes · independent
    review completed · remaining risks documented · summary of changes delivered.
 
+## Board-driven repos (when a ticket board exists)
+
+If the repo dispatches through a file-based ticket board (a `board:*` CLI over a `docs/tickets/`
+tree), the board *is* this loop's work queue — see the Ticket Boards standard in `~/.claude/CLAUDE.md`
+for the conventions. Concretely: pick the next wave with `board:waves` (dependency- and
+file-collision-safe, so it maps straight onto step 4's parallel worktrees), one ticket per
+`ticket/<id>` branch, set `status: in-progress` before building and `status: merged` + `solved:`
+after review, then retire with `board:merge <id>` — never `git mv` a ticket or hand-edit the
+generated `_board/` index. Run `board:check` before each commit that touches the ticket tree.
+
 ## Model & effort routing (STRICT — auto-enforced by `hooks/model-routing-guard.js`)
 
 **Default-cheap, escalate-on-evidence.** Omitting `model` on a subagent inherits the session
