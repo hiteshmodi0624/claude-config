@@ -126,6 +126,75 @@ The ones violated most often:
 | **Destructive actions get one rule, stated once**            | Reversible single-row delete → undo, no dialog. Cascading or irreversible → dialog naming the consequence **in real numbers** ("this account has 143 transactions"), plus undo where possible |
 | **Optimistic UI stays visibly provisional**                  | A pending row must never look identical to a saved row, and must never silently revert. "I thought that saved" is unrecoverable in a money product                                            |
 
+## Interaction patterns that generalise
+
+Hard-won on real products. Each fixes a failure that looks like good design until users hit it.
+
+### Explicit choice beats derived state
+
+Tempting: infer what the user meant from which fields they filled, so they never pick a type.
+**Usually wrong**, for two reasons that compound:
+
+1. A form that can derive *any* outcome must show the **superset of fields** — more inputs, not
+   fewer. Derivation optimises the wrong quantity.
+2. Some intents are **field-identical**. "Lent to Rahul" and "borrowed from Rahul" have the same
+   fields; only direction differs, and nothing about *which* fields are filled reveals it. So the
+   system must ask anyway — and a question *plus* a bloated form is worse than a question alone.
+
+**Instead:** open directly into the most common case (zero taps spent choosing), and put the type
+switcher in reach as a persistent, flat control. **Promote hidden sub-modes to first-class
+options** — a direction toggle buried inside one choice means your N options are really N+k, and
+the k are the ones users get wrong. Each type then shows **only its own fields**.
+
+The related rule: **if a mode can change, label it.** A derived mode with no visible statement of
+what's being recorded is a hidden mode, and hidden modes violate visibility of system status.
+
+### Offer transitions, never perform them
+
+When context suggests the user wants a different flow, **offer it inline and let them confirm**:
+
+```
+With  [ Rahul ×]
+      ↳ Splitting this with Rahul?  [ Yes, split it ]
+```
+
+Carry the entered values across on accept; leave everything alone on ignore. The type never
+changes behind the user's back, and they keep the shortcut. **Auto-morphing is the failure mode**
+— it's indistinguishable from a bug the first time it surprises someone.
+
+### Two observable amounts beat one signed adjustment
+
+When reality differs from the expected figure, do **not** ask for a delta with a ± control. Ask
+for **two numbers the user can actually observe**, then name the difference and let them pick the
+reason:
+
+```
+They owed          ₹1,000
+They actually paid ₹  900
+
+  ₹100 less than owed. What happened?
+  [ Wrote it off ]  [ Still owes me ]  [ They paid extra ]
+```
+
+The user reports **what happened**; the system computes the difference and the reason chip selects
+the accounting treatment. This is the Tesler trade made deliberately — often two *opposite* internal
+models sit behind one such control, and the user should never learn that the distinction exists.
+
+**Scope the reason chips to the direction of the difference.** Offering "paid extra" when they paid
+*less* is exactly the defect the ± control had.
+
+### Show the design, don't describe it
+
+ASCII wireframes inside a markdown file are for engineers reading a spec. **A decision-maker
+evaluating a visual direction needs to see it rendered** — real palette, real type, real copy, in a
+device frame. Annotated text and a rendered mockup are two different deliverables and neither
+substitutes for the other.
+
+Two layout rules for the rendered version, both learned by getting them wrong:
+- **Vertical grid, never horizontal scroll rails.** Anything past the second card in a rail is
+  invisible; reviewers will report screens as "missing" that are simply off-screen.
+- **A visible index of every screen**, so completeness is checkable at a glance.
+
 ## Do not cite these — they are false
 
 Traced to source and found fabricated or misattributed. Citing them destroys credibility:
