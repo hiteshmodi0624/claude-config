@@ -107,21 +107,24 @@ has. Better prompt adjectives do not work; a written constraint list does.
 Full findings, numbers and sources: **`evidence-base.md`** in this skill directory.
 The ones violated most often:
 
-| Rule                                                         | Why                                                                                                    |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| **Optimise the cost of logging/entry above features**        | Cost of collection is the #1 documented cause of tracker abandonment (57.1%)                           |
-| **Never open with a verdict**                                | The ostrich effect is measured in real login data — usage falls when the news is bad                   |
-| **Guilt, never shame**                                       | Shame-primed users made the corrective choice 23% of the time vs 69% guilt-primed                      |
-| **AI output must be editable field-by-field**                | Letting users modify an algorithm moved adoption 32%→76%; _how much_ they could change barely mattered |
-| **Never show a confidence percentage**                       | Calibrates trust without improving accuracy. Mark the uncertain _field_ instead                        |
-| **No welcome tours**                                         | ~92% dismissed; completion falls 40.5%→21% between a 4- and 5-step flow                                |
-| **First session must complete something**                    | Ownership effects vanish entirely when a task is abandoned                                             |
-| **Progress bars fill for savings, deplete for spending**     | A filling bar toward a spending cap accelerates spending toward the line                               |
-| **Zero-baseline every bar chart**                            | 83.5% misjudge truncated bars — and warning them does not help                                         |
-| **Every chart needs a sentence takeaway**                    | ~1 in 3 people have both low graph literacy and low numeracy                                           |
-| **Text labels on every nav icon**                            | An unlabelled icon got clicks from zero test participants; hidden nav halves discovery                 |
-| **44×44 CSS px minimum, ~15 mm physical for commit actions** | From 120M real touch events: error climbs sharply below 15 mm, exceeds 40% below 8 mm                  |
-| **Swipe always has a visible fallback**                      | Gesture execution fails for ~1 in 5 even after being taught                                            |
+| Rule                                                         | Why                                                                                                                                                                                           |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Optimise the cost of logging/entry above features**        | Cost of collection is the #1 documented cause of tracker abandonment (57.1%)                                                                                                                  |
+| **Never open with a verdict**                                | The ostrich effect is measured in real login data — usage falls when the news is bad                                                                                                          |
+| **Guilt, never shame**                                       | Shame-primed users made the corrective choice 23% of the time vs 69% guilt-primed                                                                                                             |
+| **AI output must be editable field-by-field**                | Letting users modify an algorithm moved adoption 32%→76%; _how much_ they could change barely mattered                                                                                        |
+| **Never show a confidence percentage**                       | Calibrates trust without improving accuracy. Mark the uncertain _field_ instead                                                                                                               |
+| **No welcome tours**                                         | ~92% dismissed; completion falls 40.5%→21% between a 4- and 5-step flow                                                                                                                       |
+| **First session must complete something**                    | Ownership effects vanish entirely when a task is abandoned                                                                                                                                    |
+| **Progress bars fill for savings, deplete for spending**     | A filling bar toward a spending cap accelerates spending toward the line                                                                                                                      |
+| **Zero-baseline every bar chart**                            | 83.5% misjudge truncated bars — and warning them does not help                                                                                                                                |
+| **Every chart needs a sentence takeaway**                    | ~1 in 3 people have both low graph literacy and low numeracy                                                                                                                                  |
+| **Text labels on every nav icon**                            | An unlabelled icon got clicks from zero test participants; hidden nav halves discovery                                                                                                        |
+| **44×44 CSS px minimum, ~15 mm physical for commit actions** | From 120M real touch events: error climbs sharply below 15 mm, exceeds 40% below 8 mm                                                                                                         |
+| **Swipe always has a visible fallback**                      | Gesture execution fails for ~1 in 5 even after being taught                                                                                                                                   |
+| **Undo everything, visibly**                                 | Cheapest, best-evidenced trust lever there is — and what makes AI errors survivable. One `UndoBar` contract: single slot, one duration everywhere, never a toast                              |
+| **Destructive actions get one rule, stated once**            | Reversible single-row delete → undo, no dialog. Cascading or irreversible → dialog naming the consequence **in real numbers** ("this account has 143 transactions"), plus undo where possible |
+| **Optimistic UI stays visibly provisional**                  | A pending row must never look identical to a saved row, and must never silently revert. "I thought that saved" is unrecoverable in a money product                                            |
 
 ## Do not cite these — they are false
 
