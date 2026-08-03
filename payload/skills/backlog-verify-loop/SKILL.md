@@ -1,6 +1,6 @@
 ---
 name: backlog-verify-loop
-description: "Autonomous drain-then-browser-verify loop until the app is clean. Use when a backlog should be driven to completion hands-off with every page and link verified each round, or when the user says 'loop until the site works', 'verify every page and link', 'integration-test the whole app in a loop', 'keep draining and re-checking', 'playwright verify then fix then repeat'. Not for a single ticket or a UI-less backend — use backlog-drain instead."
+description: "Autonomous drain-then-browser-verify loop until the app is clean. Use when a backlog should be driven to completion hands-off with every page and link verified each round, or when the user says 'loop until the site works', 'verify every page and link', 'integration-test the whole app in a loop', 'keep draining and re-checking', 'playwright verify then fix then repeat'. Not for a single ticket or a UI-less backend — use orchestrating-parallel-agents instead."
 ---
 
 # backlog-verify-loop
@@ -9,7 +9,7 @@ description: "Autonomous drain-then-browser-verify loop until the app is clean. 
 
 The outer loop: plan → implement → browser-verify → repeat until the app is provably clean. **The browser pass is a discovery engine that mints bug tickets — never a red/green gate.** Its one hard job is separating a CODE BUG from a missing-data empty state: conflate them and the loop never terminates, churning forever on data gaps that no amount of code can fix.
 
-Composes backlog-detail (Phase 1, autonomous mode) → backlog-drain (Phase 2) → browser verify (Phase 3) → repeat.
+Composes backlog-detail (Phase 1, autonomous mode) → orchestrating-parallel-agents (Phase 2, its "Draining a ticket backlog" loop) → browser verify (Phase 3) → repeat.
 
 ## When to use / when NOT
 
@@ -24,7 +24,7 @@ Composes backlog-detail (Phase 1, autonomous mode) → backlog-drain (Phase 2) �
 [ ] 2. Crawl every route type + every in-page link (contract below)
 [ ] 3. Classify EVERY finding: CODE BUG | data gap | nit
 [ ] 4. Terminate? zero new code-bug tickets AND empty backlog → STOP, final report
-[ ] 5. Repair: backlog-detail (autonomous) → backlog-drain → back to 1
+[ ] 5. Repair: backlog-detail (autonomous) → orchestrating-parallel-agents → back to 1
 [ ] 6. Print the round report
 ```
 
@@ -52,7 +52,7 @@ Composes backlog-detail (Phase 1, autonomous mode) → backlog-drain (Phase 2) �
 
 4. **Terminate?** Concrete predicate, both halves required: this round filed **zero code-bug tickets** AND the backlog (tickets with status `backlog` or `in-progress`) is **empty** → STOP and print the final report. Otherwise continue.
 
-5. **Repair.** Run backlog-detail in **autonomous mode** on the new + remaining tickets — no human in the loop, so it skips its Drill stage; the writer picks the safe/reversible default and records `ASSUMPTION: <choice> — <reason>` per ticket. Then backlog-drain builds and merges them gate-green. Loop back to step 1.
+5. **Repair.** Run backlog-detail in **autonomous mode** on the new + remaining tickets — no human in the loop, so it skips its Drill stage; the writer picks the safe/reversible default and records `ASSUMPTION: <choice> — <reason>` per ticket. Then orchestrating-parallel-agents builds and merges them gate-green. Loop back to step 1.
 
 6. **Round report, every round:** routes crawled · code bugs found + filed · data gaps noted · tickets merged · gate result. Keep rounds small — the report is the user's interrupt point.
 

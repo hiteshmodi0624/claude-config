@@ -1,6 +1,6 @@
 ---
 name: backlog-detail
-description: "Exhaustive ticket planning until implementation needs zero decisions. Use when a backlog must be detailed before any code is written, or when the user says 'detail the tickets', 'plan every ticket', 'ask me questions before building', 'make tickets a weak model can build', 'review the planning', 'split big tickets'. Not for implementing the tickets — route that to backlog-drain."
+description: "Exhaustive ticket planning until implementation needs zero decisions. Use when a backlog must be detailed before any code is written, or when the user says 'detail the tickets', 'plan every ticket', 'ask me questions before building', 'make tickets a weak model can build', 'review the planning', 'split big tickets'. Not for implementing the tickets — route that to orchestrating-parallel-agents."
 ---
 
 # backlog-detail
@@ -14,13 +14,13 @@ Two structural facts drive the design:
 - Interactive drilling cannot happen inside a parallel headless fan-out — subagents cannot talk to the user. Hence four stages, not one pass.
 - A spec is cheap markdown, so there is exactly ONE review — after the write — judging approach AND completeness. A wrong-approach rewrite costs only markdown; a separate pre-write review isn't worth a stage.
 
-Loop position: Phase 1. backlog-drain implements (Phase 2); backlog-verify-loop is the outer loop.
+Loop position: Phase 1. orchestrating-parallel-agents implements (Phase 2); backlog-verify-loop is the outer loop.
 
 ## When to use / when NOT
 
 - Use when tickets exist but are thin — no file lists, no signatures, no test assertions — and a human or autonomous drain is about to build them.
 - "Review the planning" on already-detailed tickets → run Stage 4 alone.
-- NOT for implementing tickets (backlog-drain) or designing a feature from nothing (brainstorm it first).
+- NOT for implementing tickets (orchestrating-parallel-agents) or designing a feature from nothing (brainstorm it first).
 
 ## Two modes
 

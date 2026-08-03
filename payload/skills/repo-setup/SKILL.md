@@ -25,7 +25,7 @@ Use when:
 NOT for:
 
 - Designing or building product features.
-- Working tickets on an existing board — use backlog-detail / backlog-drain. The board
+- Working tickets on an existing board — use backlog-detail / orchestrating-parallel-agents. The board
   checklists here cover standing up and maintaining the board itself.
 - Reviewing finished code — use review-uncommitted / review-branch.
 

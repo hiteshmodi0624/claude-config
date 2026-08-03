@@ -1,6 +1,6 @@
 ---
 name: orchestrating-parallel-agents
-description: "Multi-agent build orchestration across git worktrees. Use when running multiple coding subagents in parallel, parallelizing independent tickets or features, coordinating builder+reviewer agents that must not conflict, or when the user says 'orchestrate', 'parallel agents', 'multi-agent', 'fan out', 'run the next wave', 'spin up builders', 'drain the backlog'. Not for one tightly-coupled change or a quick edit — use a single thread."
+description: "Multi-agent build orchestration across git worktrees, and the round loop that drains a ticket backlog to merged. Use when running coding subagents in parallel, parallelizing independent tickets, coordinating builder+reviewer agents that must not conflict, or when the user says 'orchestrate', 'parallel agents', 'fan out', 'spin up builders', 'drain the backlog', 'implement the backlog', 'build the tickets in parallel', 'run the next wave'. Not for one tightly-coupled change or a quick edit (single thread), and not for an undetailed backlog — detail it first with backlog-detail."
 ---
 
 # Orchestrating Parallel Agents
@@ -18,6 +18,7 @@ Default execution is the Workflow tool's `pipeline()`, not hand-fanned `Agent` c
 | Several independent tickets touching different files/packages | Parallelize — this skill                                                                                             |
 | A wave/batch of divisible work where speed matters            | Parallelize — this skill                                                                                             |
 | Tasks share files or one hot package                          | Serialize — one stream per hot area                                                                                  |
+| A chain of phases (N+1 needs N merged)                        | One head per round; the rest advance next round                                                                      |
 | One tightly-coupled change, however large                     | Single thread + plan; do not fan out                                                                                 |
 | Quick one-file edit                                           | Just do it inline                                                                                                    |
 | Work not clearly divisible, or low value                      | Single thread — multi-agent burns roughly 15× the tokens of one session; only fan out when the split pays for itself |
@@ -49,27 +50,26 @@ Step notes:
 - **Step 2** — if fewer disjoint tickets exist than your desired width, that count IS the ceiling. Idle slots beat colliding builders.
 - **Step 4** — re-read `git rev-parse <base>` before each merge (another session may have moved it). A 1-line review fix → apply in the branch worktree first; a deep NEEDS-FIX goes back to a builder next round.
 
-## Hard safety rules (each learned from a real failure)
+## Hard rules (each learned from a real failure)
 
 - **Builders self-verify their OWN package before reporting done.** Worktrees have no deps installed. If the repo has a worktree-verify script (check `scripts/`, e.g. `scripts/verify-worktree.sh <pkg>`), the builder runs it and must see exit 0; if none exists, create one from the recipe in builder-and-reviewer-prompts.md; if that's impossible, the builder must report `could-not-self-verify` and the merge gate is the only proof. WHY: unverified "done" reports push same-package breakage into your gate.
+- **A scoped verify proves SAME-package only — never treat a builder's "all green" as cross-package truth.** Cross-package truth is the full gate in step 4, and nothing else.
 - **Never run a full dependency install (e.g. `yarn install`) in a worktree.** WHY: it truncates the agent's run mid-investigation — the verify script symlinks the main checkout's deps instead.
 - **Builders commit early and often:** `git commit --allow-empty` first so the branch exists, then commit after every file. WHY: truncation before the first real commit loses everything.
-- **Merges live in the main thread, never in the workflow.** WHY: pipeline stages fire concurrently — a merge stage races the shared branch for several items at once.
-- **Serialize merges.** Only you merge, one at a time, never while another session merges. WHY: concurrent merges corrupt the shared branch.
+- **Never feed a builder's report to its own reviewer.** WHY: a reviewer shown the self-assessment rubber-stamps it. Redact it — the reviewer reads the diff.
+- **Strongest-tier review before every merge.** WHY: builders self-report "done" optimistically; trust the review and the gate, never the builder's narrative.
+- **Merges live in the main thread, never in the workflow, and only one at a time.** WHY: pipeline stages fire concurrently, and concurrent `git merge` races corrupt the shared branch. Never merge while another session is merging.
+- **Run the full gate after ALL merges, not per branch.** WHY: a field made required on a shared type breaks sibling fixtures invisibly until the whole graph compiles.
 - **Re-check HEAD and the base ref after every worktree cleanup.** WHY: worktree auto-clean can silently move the primary checkout's HEAD onto an agent branch, and a stray reset can move the base ref backward — either orphans a whole batch. Recovery commands in merge-gate-and-recovery.md.
 - **Never reset the base branch backward.** Base pushed forward by another session is fine — merge onto the current tip. Base moved BACKWARD is an incident: STOP → `git reflog <base>` → reset to the real tip. If a backward reset is blocked (harness/auto-mode), merge forward — superseded partial commits become harmless ancestors.
-- **Strongest-tier review before every merge.** WHY: builders self-report "done" optimistically; trust the review and the gate, never the builder's narrative.
-- **Run the full gate after ALL merges, not per branch.** WHY: a field made required on a shared type breaks sibling fixtures invisibly until the whole graph compiles.
 
 ## Sizing & effort scaling
 
 - One builder = one **disjoint package** (or a small file-set within one package) — small enough that a scoped verify is meaningful proof of done. A ticket whose footprint spans many packages is too big: split it before dispatch.
 - A few genuinely disjoint streams beat many colliding ones (3–4 disjoint > 6 colliding). The disjoint count is the width — never pad it.
-- Scale investment to the task, not the round (multi-agent research rule of thumb: simple lookup ≈ 1 agent / 3–10 tool calls; comparison ≈ 2–4 agents / 10–15 calls each; only genuinely complex work justifies 10+ agents):
+- Scale investment to the task, not the round (multi-agent research rule of thumb: simple lookup ≈ 1 agent / 3–10 tool calls; comparison ≈ 2–4 agents / 10–15 calls each; only genuinely complex work justifies 10+ agents).
 
-Builders and reviewers both run on the strongest tier — the code an agent writes unsupervised in
-a worktree is what gets merged, so buying quality at write time is cheaper than catching it at
-review time. Drop a stream to the cheapest tier only when it is genuinely mechanical.
+Builders and reviewers both run on the strongest tier — the code an agent writes unsupervised in a worktree is what gets merged, so buying quality at write time is cheaper than catching it at review time. Drop a stream to the cheapest tier only when it is genuinely mechanical.
 
 | Stream                                                | Tier / effort                     |
 | ------------------------------------------------------- | ----------------------------------- |
@@ -79,26 +79,19 @@ review time. Drop a stream to the cheapest tier only when it is genuinely mechan
 
 Never hardcode dated model ids; use the haiku/sonnet/opus aliases.
 
+## Draining a ticket backlog
+
+Same loop, with a backlog as the queue. Three things it adds:
+
+- **Precondition: the tickets must already be detailed.** Vague tickets burn builder runs on unmade decisions — run `backlog-detail` first.
+- **Let the board compute the wave.** If the repo has board tooling, `board:waves` prints exactly the tickets whose dependencies are satisfied and whose `touches` do not collide — that is step 2, done for you. Otherwise hand-partition by disjoint file footprints. Retire through the tool (`board:merge <id>` after setting `status: merged` + `solved:`), never `git mv`. See the `ticket-board` skill.
+- **Drained means no buildable ticket remains — not "this round finished".** Merging a chain head unblocks the next one, so recompute the wave and go again.
+
+For the hands-off version that also crawls the running app each round and mints bug tickets from what it finds, use `backlog-verify-loop`, which wraps this loop.
+
 ## Quick reference
 
 **Recurring merge conflict — a stale-base append-only manifest** (a package manifest's test-script list, a barrel file, a registry): take `--ours` (the base's full list) then append the branch's NEW entry. Never take `--theirs` whole — it silently drops entries the base added since the branch forked (silent test loss). Commands in merge-gate-and-recovery.md.
-
-## Common mistakes
-
-| Mistake                                                | Reality                                                                      |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| Dispatch builders before grepping the base             | ~1-in-3 backlog items are already shipped; you burn a full run finding out   |
-| Two concurrent streams in the same file/package        | Merge conflicts + lost work; partition by disjoint files instead             |
-| Full dependency install in a worktree to "verify"      | It truncates the run; the verify script symlinks the main checkout's deps    |
-| Skip the scoped verify and report "done"               | Same-package breaks then reach the gate; run it, see exit 0 first            |
-| Trust the builder's "all green" as cross-package truth | Scoped verify proves SAME-package only; cross-package truth is the full gate |
-| Gate per-branch, skip the final full run               | Cross-package breaks hide until the whole graph builds                       |
-| Merge an unreviewed branch because it "looks fine"     | The strongest-tier review is the quality bar; no review, no merge            |
-| Feed the builder's report to its reviewer              | Reviewers fed the builder's self-assessment rubber-stamp; redact it          |
-| Forget the HEAD/base re-check after cleanup            | Silent HEAD-hijack / base-rewind orphans a whole batch                       |
-| Put `git merge` inside a `pipeline` stage              | Stages run concurrently → merges race the branch; merge in the main thread   |
-| Force full batch width when only 2 are disjoint        | Idle slots beat colliding builders; the disjoint count IS the ceiling        |
-| Parallelize phases of one chain                        | Phase N+1 needs N merged; run one head per round, advance next round         |
 
 ## Reference files
 
@@ -108,4 +101,4 @@ Never hardcode dated model ids; use the haiku/sonnet/opus aliases.
 
 ## Provenance
 
-Distilled from real orchestration runs, not theory. The pipeline mechanism replaced hand-fanned `Agent` waves once it proved the no-barrier review + auto-queue behavior; the merge stayed in the main thread because concurrent `git merge` races. When a round surfaces a new failure mode, add the explicit counter here.
+Distilled from real orchestration runs, not theory. The pipeline mechanism replaced hand-fanned `Agent` waves once it proved the no-barrier review + auto-queue behavior; the merge stayed in the main thread because concurrent `git merge` races. When a round surfaces a new failure mode, add the explicit counter to the hard rules.

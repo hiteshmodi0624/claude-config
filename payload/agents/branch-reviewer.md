@@ -1,6 +1,6 @@
 ---
 name: branch-reviewer
-description: Reviews ONE feature branch read-only before merge, returning a closed verdict (MERGE-AS-IS | MERGE-WITH-NITS | NEEDS-FIX) with file:line evidence. Use as the mandatory pre-merge reviewer in orchestrating-parallel-agents or backlog-drain rounds. Not for implementing fixes (use worktree-builder) or reviewing uncommitted working-tree changes (use the review-uncommitted skill).
+description: Reviews ONE feature branch read-only before merge, returning a closed verdict (MERGE-AS-IS | MERGE-WITH-NITS | NEEDS-FIX) with file:line evidence. Use as the mandatory pre-merge reviewer in orchestrating-parallel-agents rounds. Not for implementing fixes (use worktree-builder) or reviewing uncommitted working-tree changes (use the review-uncommitted skill).
 tools: Read, Grep, Glob, Bash
 model: opus
 effort: high
