@@ -20,7 +20,7 @@ Loop position: Phase 1. backlog-drain implements (Phase 2); backlog-verify-loop 
 
 - Use when tickets exist but are thin — no file lists, no signatures, no test assertions — and a human or autonomous drain is about to build them.
 - "Review the planning" on already-detailed tickets → run Stage 4 alone.
-- NOT for implementing tickets (backlog-drain) or designing a feature from nothing (feature-start).
+- NOT for implementing tickets (backlog-drain) or designing a feature from nothing (brainstorm it first).
 
 ## Two modes
 

@@ -1,6 +1,6 @@
 ---
 name: repo-setup
-description: "Production-proven repo setup and audit checklists. Use when bootstrapping a new repo or standing up/auditing one concern — DNS/CDK, ticket board, AWS deploy, billing, copy package, email, entitlements, analytics, landing performance, SEO/GEO/AIO, root scripts, local dev vs real AWS — or when the user says 'set up the repo', 'bootstrap the project', 'audit our setup', 'bring the repo up to standard'. Not for designing features — use feature-start."
+description: "Production-proven repo setup and audit checklists. Use when bootstrapping a new repo or standing up/auditing one concern — DNS/CDK, ticket board, AWS deploy, billing, copy package, email, entitlements, analytics, landing performance, SEO/GEO/AIO, root scripts, local dev vs real AWS — or when the user says 'set up the repo', 'bootstrap the project', 'audit our setup', 'bring the repo up to standard'. Not for designing or building product features."
 ---
 
 # Repository Setup
@@ -24,7 +24,7 @@ Use when:
 
 NOT for:
 
-- Designing or building product features — use feature-start.
+- Designing or building product features.
 - Working tickets on an existing board — use backlog-detail / backlog-drain. The board
   checklists here cover standing up and maintaining the board itself.
 - Reviewing finished code — use review-uncommitted / review-branch.
