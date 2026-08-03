@@ -1,6 +1,6 @@
 ---
 name: remotion-best-practices
-description: Best practices for Remotion - Video creation in React
+description: "Remotion API rules and pitfalls for programmatic video in React — frame-driven animation, useCurrentFrame, composition setup, audio/asset handling, rendering. Use when writing or debugging Remotion compositions. Not for non-Remotion video work — see reel-builder."
 metadata:
   tags: remotion, video, react, animation, composition
 ---

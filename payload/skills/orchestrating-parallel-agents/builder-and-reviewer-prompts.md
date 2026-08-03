@@ -22,10 +22,10 @@ the source of truth and the fallback when the agents aren't installed.
 
 ## Builder prompt template
 
-Dispatch with an **isolated git worktree** (`isolation: 'worktree'`). Model routing
-(auto-enforced): builders default `model: 'sonnet'`, `effort: 'medium'`; escalate ONE ticket to
-`opus`/high only per the SKILL.md sizing table, tagging the prompt `[ESCALATED: <reason>]`. Pair
-with `BUILD_REPORT_SCHEMA` from `workflow-pipeline.md` so the report comes back structured.
+Dispatch with an **isolated git worktree** (`isolation: 'worktree'`). Builders default to
+`model: 'opus'`, `effort: 'high'` — drop a stream lower only when its work is genuinely
+mechanical. Pair with `BUILD_REPORT_SCHEMA` from `workflow-pipeline.md` so the report comes back
+structured.
 
 ```
 You are a top-tier software engineer in <REPO/STACK: e.g. a yarn-workspaces TS monorepo>.

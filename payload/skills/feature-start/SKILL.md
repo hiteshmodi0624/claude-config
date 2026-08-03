@@ -82,7 +82,7 @@ If at any point the work starts to ignore a principle — one giant unphased bui
 
 _"This was set as an engineering rule, and X is not following it."_
 
-WHY: this exact sentence is quoted by the user's global rules and hooks — it is the agreed drift signal. Keep the wording verbatim.
+WHY: this is the agreed drift signal in `~/.claude/CLAUDE.md` — say it plainly rather than quietly continuing.
 
 ## Common mistakes
 

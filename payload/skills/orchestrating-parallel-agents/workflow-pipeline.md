@@ -42,10 +42,9 @@ export const meta = {
 
 // Tier aliases — set once per session to the tiers actually available.
 // Never hardcode dated model ids in a reusable script.
-// ROUTING POLICY (auto-enforced): builders default MID/medium; STRONGEST is for
-// reviewers + tickets explicitly escalated after a MID attempt failed.
-const STRONGEST = "opus"; // reviewers + escalated builds ONLY
-const MID = "sonnet"; // DEFAULT build tier
+// Builders AND reviewers default to STRONGEST; CHEAP is for mechanical stages only.
+const STRONGEST = "opus"; // DEFAULT for builders and reviewers
+const CHEAP = "haiku"; // mechanical stages only (greps, bookkeeping)
 
 // BUILD_REPORT_SCHEMA forces the builder to return structured facts —
 // the orchestrator programmatically builds the merge gate from these.
@@ -104,7 +103,7 @@ const results = await pipeline(
       label: `build:${t.slug}`,
       phase: "Build",
       isolation: "worktree",
-      model: t.model ?? MID, // STRONGEST only via per-ticket escalation (see sizing table)
+      model: t.model ?? STRONGEST, // per-ticket override only for genuinely mechanical work
       effort: t.effort ?? "medium",
       schema: BUILD_REPORT_SCHEMA,
     }).then((report) => ({
@@ -122,7 +121,7 @@ const results = await pipeline(
       label: `review:${built.slug}`,
       phase: "Review",
       agentType: "general-purpose",
-      model: STRONGEST, // reviews stay strong — this is what makes cheap builders safe
+      model: STRONGEST, // an independent strong reviewer is the merge gate
       effort: "high",
       schema: VERDICT_SCHEMA,
     }).then((verdict) => ({

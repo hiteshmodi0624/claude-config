@@ -67,13 +67,11 @@ Never hardcode model ids; pick by capability tier when spawning.
 | Role                                         | Tier / effort                       | Why                                                   |
 | -------------------------------------------- | ----------------------------------- | ----------------------------------------------------- |
 | Orchestrator (this session)                  | the session itself — no spawn       | owns merge, gate, and the code-vs-data call           |
-| Browser crawler                              | sonnet, low–medium effort           | mechanical navigation + assertions                    |
+| Browser crawler                              | haiku, low effort                   | mechanical navigation + assertions                    |
 | Code-vs-data classifier (ambiguous findings) | opus, high effort                   | this judgement is the loop's single failure-mode risk |
 
-The classifier is a judging role — phrase its prompt as one ("judge whether this finding is a
-code bug or missing data…") so the model-routing guard recognizes the opus justification. Builders
-and reviewers inside the drain rounds follow orchestrating-parallel-agents routing (builders
-sonnet/medium; reviewers opus/high; per-ticket `[ESCALATED: <reason>]` only).
+Builders and reviewers inside the drain rounds follow orchestrating-parallel-agents routing —
+both on the strongest tier at high effort.
 
 ## Common mistakes
 

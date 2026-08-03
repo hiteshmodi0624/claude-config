@@ -67,16 +67,15 @@ Step notes:
 - A few genuinely disjoint streams beat many colliding ones (3–4 disjoint > 6 colliding). The disjoint count is the width — never pad it.
 - Scale investment to the task, not the round (multi-agent research rule of thumb: simple lookup ≈ 1 agent / 3–10 tool calls; comparison ≈ 2–4 agents / 10–15 calls each; only genuinely complex work justifies 10+ agents):
 
-**Default-cheap, escalate-on-evidence** (auto-enforced by `model-routing-guard.js`): the strong
-reviewer is what makes cheap builders safe — paying strongest-tier for both build AND review buys
-the same merged quality bar twice.
+Builders and reviewers both run on the strongest tier — the code an agent writes unsupervised in
+a worktree is what gets merged, so buying quality at write time is cheaper than catching it at
+review time. Drop a stream to the cheapest tier only when it is genuinely mechanical.
 
-| Stream                                                          | Tier / effort                                                                                                   |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Every builder — **DEFAULT**                                      | Mid tier (Sonnet), medium effort                                                                                 |
-| Mechanical (triage greps, retire-checks, bookkeeping)            | Cheapest tier (Haiku), low effort                                                                                |
-| Escalated builder ONLY: a mid-tier attempt failed/truncated, or the plan pre-flags cross-package concurrency/migration, security-sensitive, or design-critical UI | Strongest tier (Opus), high effort — escalate that ONE ticket with `[ESCALATED: <reason>]`, never the whole round |
-| Every reviewer                                                   | **Strongest tier (Opus), high effort — mandatory**                                                              |
+| Stream                                                | Tier / effort                     |
+| ------------------------------------------------------- | ----------------------------------- |
+| Every builder — **DEFAULT**                           | Strongest tier (Opus), high effort |
+| Every reviewer — never the implementer                | Strongest tier (Opus), high effort |
+| Mechanical (triage greps, retire-checks, bookkeeping) | Cheapest tier (Haiku), low effort  |
 
 Never hardcode dated model ids; use the haiku/sonnet/opus aliases.
 
