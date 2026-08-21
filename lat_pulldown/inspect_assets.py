@@ -1,3 +1,4 @@
+# Deterministic asset inventory used before rig generation.
 import bpy
 import json
 import os
