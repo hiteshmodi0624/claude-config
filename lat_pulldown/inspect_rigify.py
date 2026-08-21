@@ -1,3 +1,4 @@
+# Inventory generated controls before authoring motion.
 import bpy, json, sys
 from pathlib import Path
 
@@ -18,23 +19,10 @@ bpy.context.view_layer.objects.active = meta
 meta.select_set(True)
 bpy.ops.pose.rigify_generate()
 rig = bpy.context.object
-records = {
-    'metarig_name': meta.name,
-    'metarig_dimensions': meta_dims,
-    'metarig_bones': meta_bones,
-    'rig_name': rig.name,
-    'rig_dimensions': list(rig.dimensions),
-    'pose_bones': [],
-}
+records = {'metarig_name':meta.name,'metarig_dimensions':meta_dims,'metarig_bones':meta_bones,'rig_name':rig.name,'rig_dimensions':list(rig.dimensions),'pose_bones':[]}
 for pb in rig.pose.bones:
     if any(k in pb.name for k in ('hand','upper_arm','forearm','thigh','shin','foot','toe','spine','chest','torso','shoulder','pelvis','hips','f_index','f_middle','f_ring','f_pinky','thumb')):
-        records['pose_bones'].append({
-            'name': pb.name,
-            'parent': pb.parent.name if pb.parent else None,
-            'custom_props': list(pb.keys()),
-            'constraints': [{'name': c.name, 'type': c.type, 'target': c.target.name if getattr(c,'target',None) else None, 'subtarget': getattr(c,'subtarget','')} for c in pb.constraints],
-            'head': list(pb.head), 'tail': list(pb.tail),
-        })
+        records['pose_bones'].append({'name':pb.name,'parent':pb.parent.name if pb.parent else None,'custom_props':list(pb.keys()),'constraints':[{'name':c.name,'type':c.type,'target':c.target.name if getattr(c,'target',None) else None,'subtarget':getattr(c,'subtarget','')} for c in pb.constraints],'head':list(pb.head),'tail':list(pb.tail)})
 out.parent.mkdir(parents=True,exist_ok=True)
 out.write_text(json.dumps(records,indent=2),encoding='utf-8')
 print(json.dumps(records,indent=2))
