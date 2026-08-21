@@ -1,0 +1,36 @@
+name: ChatGPT Lat Pulldown Build
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'lat_pulldown/**'
+      - '.github/workflows/chatgpt-lat-pulldown.yml'
+
+jobs:
+  build:
+    if: github.head_ref == 'chatgpt/lat-pulldown-build-20260821'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Blender 4.5.12 LTS
+        run: |
+          curl -L --fail --retry 3 -o blender.tar.xz https://download.blender.org/release/Blender4.5/blender-4.5.12-linux-x64.tar.xz
+          tar -xf blender.tar.xz
+          mv blender-4.5.12-linux-x64 blender
+      - name: Download CC0 Human Base Meshes 1.4.1
+        run: |
+          mkdir -p assets/human_base_meshes
+          curl -L --fail --retry 3 -o human.zip https://download.blender.org/demo/asset-bundles/human-base-meshes/human-base-meshes-bundle-v1.4.1.zip
+          unzip -q human.zip -d assets/human_base_meshes
+      - name: Inspect assets
+        run: |
+          mkdir -p output
+          ./blender/blender --background --factory-startup --python lat_pulldown/inspect_assets.py -- --bundle-dir assets/human_base_meshes --out output/asset_inventory.json
+      - name: Upload inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: lat-pulldown-inspection
+          path: output/
+          compression-level: 6
