@@ -1,0 +1,31 @@
+name: Lat Pulldown Asset Inspection
+
+on:
+  pull_request:
+    paths:
+      - 'lat_pulldown/**'
+      - '.github/workflows/lat-pulldown-inspect.yml'
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Blender 4.5 LTS
+        run: |
+          curl -L --fail --retry 3 -o blender.tar.xz https://download.blender.org/release/Blender4.5/blender-4.5.12-linux-x64.tar.xz
+          tar -xf blender.tar.xz
+          echo "$PWD/blender-4.5.12-linux-x64" >> "$GITHUB_PATH"
+      - name: Download Blender Studio Human Base Meshes v1.4.1
+        run: |
+          mkdir -p lat_pulldown/vendor/human_base_meshes
+          curl -L --fail --retry 3 -o /tmp/human.zip https://download.blender.org/demo/asset-bundles/human-base-meshes/human-base-meshes-bundle-v1.4.1.zip
+          unzip -q /tmp/human.zip -d lat_pulldown/vendor/human_base_meshes
+          find lat_pulldown/vendor/human_base_meshes -maxdepth 4 -type f | sort | head -200
+      - name: Inspect bundle through Blender Python
+        run: |
+          blender --background --factory-startup --python lat_pulldown/inspect_assets.py -- --bundle-dir lat_pulldown/vendor/human_base_meshes --out lat_pulldown/asset_inventory.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: human-asset-inventory
+          path: lat_pulldown/asset_inventory.json
