@@ -27,15 +27,23 @@ jobs:
         run: |
           mkdir -p output
           sed -i "s/scene.world.color=(0.018,0.022,0.03)/scene.world=bpy.data.worlds.new('World'); scene.world.color=(0.018,0.022,0.03)/" lat_pulldown/build_blend.py
+          python - <<'PY'
+          p='lat_pulldown/build_blend.py'
+          s=open(p).read()
+          marker='# Render visual checks and save with frame 1 active.'
+          if marker in s:
+              s=s[:s.index(marker)] + "scene.frame_set(1)\nbpy.ops.wm.save_as_mainfile(filepath=str(OUT.resolve()))\nprint('SAVED',OUT.resolve())\n"
+          open(p,'w').write(s)
+          PY
           ./blender/blender --background --factory-startup --python lat_pulldown/build_blend.py -- output/lat_pulldown.blend
           test -s output/lat_pulldown.blend
           ls -lh output
       - name: Verify blend opens
         run: |
           ./blender/blender --background output/lat_pulldown.blend --python-expr "import bpy; assert len(bpy.data.objects)>20; assert bpy.context.scene.frame_end==96; print('VERIFY', len(bpy.data.objects), bpy.context.scene.frame_end)"
-      - name: Upload blend and previews
+      - name: Upload blend
         uses: actions/upload-artifact@v4
         with:
           name: lat-pulldown-blend
-          path: output/
+          path: output/lat_pulldown.blend
           compression-level: 6
