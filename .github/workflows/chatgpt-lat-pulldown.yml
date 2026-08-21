@@ -19,19 +19,17 @@ jobs:
           curl -L --fail --retry 3 -o blender.tar.xz https://download.blender.org/release/Blender4.5/blender-4.5.12-linux-x64.tar.xz
           tar -xf blender.tar.xz
           mv blender-4.5.12-linux-x64 blender
-      - name: Download CC0 Human Base Meshes 1.4.1
-        run: |
-          mkdir -p assets/human_base_meshes
-          curl -L --fail --retry 3 -o human.zip https://download.blender.org/demo/asset-bundles/human-base-meshes/human-base-meshes-bundle-v1.4.1.zip
-          unzip -q human.zip -d assets/human_base_meshes
-      - name: Inspect assets and Rigify
+      - name: Build animated Blender scene
         run: |
           mkdir -p output
-          ./blender/blender --background --factory-startup --python lat_pulldown/inspect_assets.py -- --bundle-dir assets/human_base_meshes --out output/asset_inventory.json
-          ./blender/blender --background --factory-startup --python lat_pulldown/inspect_rigify.py -- output/rigify_inventory.json
-      - name: Upload inspection
+          ./blender/blender --background --factory-startup --python lat_pulldown/build_blend.py -- output/lat_pulldown.blend
+          ls -lh output
+      - name: Verify blend opens
+        run: |
+          ./blender/blender --background output/lat_pulldown.blend --python-expr "import bpy; print('VERIFY', len(bpy.data.objects), bpy.context.scene.frame_end)"
+      - name: Upload blend and previews
         uses: actions/upload-artifact@v4
         with:
-          name: lat-pulldown-inspection
+          name: lat-pulldown-blend
           path: output/
           compression-level: 6
